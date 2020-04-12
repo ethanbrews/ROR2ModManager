@@ -1,0 +1,39 @@
+﻿<Page
+    x:Class="ROR2ModManager.Pages.Install.DoInstall"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ROR2ModManager.Pages.Install"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <controls:DockPanel Margin="20 20 20 10">
+        <controls:DockPanel Margin="0 0 0 10" controls:DockPanel.Dock="Top">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" controls:DockPanel.Dock="Left">
+                <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Installing mods..."/>
+            </StackPanel>
+            <!--<Button Content="Cancel" controls:DockPanel.Dock="Right">
+                <Button.Flyout>
+                    <Flyout>
+                        <StackPanel>
+                            <TextBlock Style="{ThemeResource BaseTextBlockStyle}" Text="Cancel this mod installation?" Margin="0,0,0,12" />
+                            <Button Click="CancelAll_Click" Content="Yes, cancel" />
+                        </StackPanel>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>-->
+        </controls:DockPanel>
+        <StackPanel>
+            <StackPanel Margin="0 40 0 0" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Text="Progress" HorizontalAlignment="Center" Style="{StaticResource SubtitleTextBlockStyle}" />
+                <ProgressBar x:Name="ProgressBar" Margin="0 20 0 0" Width="300" Value="0" />
+                <TextBlock x:Name="DownloadAmount" Margin="0 15 0 0" Text="Downloaded 2/4" HorizontalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}" />
+                <!--<TextBlock x:Name="InstallAmount" Margin="0 5 0 0" Text="Installed 1/4" HorizontalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}" />-->
+                <!--<TextBlock Foreground="Red" x:Name="FailAmount" Margin="0 5 0 0" Text="" HorizontalAlignment="Center" Style="{StaticResource BodyTextBlockStyle}" />-->
+            </StackPanel>
+        </StackPanel>
+
+    </controls:DockPanel>
+</Page>

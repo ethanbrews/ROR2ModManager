@@ -1,0 +1,22 @@
+﻿<Page
+    x:Class="ROR2ModManager.Pages.ConfigEdit"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ROR2ModManager.Pages"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    Loading="Page_Loading">
+
+    <StackPanel Margin="10">
+        <TextBlock Text="Config Editor" Style="{StaticResource TitleTextBlockStyle}" Margin="0 0 10 0" />
+        <StackPanel x:Name="ValueSelector" Margin="0 0 10 0" Padding="10" BorderThickness="3" BorderBrush="{ThemeResource SystemControlBackgroundListMediumRevealBorderBrush}">
+            <TextBlock Text="No Item Selected" />
+        </StackPanel>
+        
+        <TreeView Name="CfgTree" Margin="0 10 10 10" ItemInvoked="CfgTree_ItemInvoked">
+            
+        </TreeView>
+    </StackPanel>
+</Page>
