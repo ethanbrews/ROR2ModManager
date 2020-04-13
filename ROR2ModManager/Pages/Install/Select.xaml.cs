@@ -1,4 +1,5 @@
-﻿using Microsoft.Toolkit.Uwp.Helpers;
+﻿using MetroLog;
+using Microsoft.Toolkit.Uwp.Helpers;
 using ROR2ModManager.API;
 using System;
 using System.Collections.Generic;
@@ -59,6 +60,8 @@ namespace ROR2ModManager.Pages.Install
         //Packages ticked by the user are stored here to be passed to next Page.
         List<Package> SelectedPackages = new List<Package>();
 
+        ILogger log = LogManagerFactory.DefaultLogManager.GetLogger<MainPage>();
+
         private string lastSearchQuery; // Quick fix so that holding shift doesn't refresh the list. Should maybe use a custom ObservableCollection that does this check?
 
         public Select()
@@ -73,9 +76,14 @@ namespace ROR2ModManager.Pages.Install
         /// <returns></returns>
         public async Task LoadLocalPackageIndex()
         {
+            log.Debug("Loading Local Package Index...");
             Windows.Storage.StorageFolder localFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
             if (!await localFolder.FileExistsAsync("ThunderstorePackagesCache.dat"))
+            {
+                log.Debug("Index doesn't exist");
                 return;
+            }
+                
             BinaryFormatter bf = new BinaryFormatter();
 
             try
@@ -86,17 +94,16 @@ namespace ROR2ModManager.Pages.Install
                 }
             } catch (SerializationException)
             {
+                log.Debug("A SerializationException occurred when deserializing ThunderstorePackagesCache.dat");
                 return;
             }
-
-
-
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             //await LoadLocalPackageIndex();
             //FilterPackages("");
+            log.Debug("Navigated to Select page");
             try
             {
                 await PopulatePackagesFromWeb();
@@ -106,6 +113,7 @@ namespace ROR2ModManager.Pages.Install
                 System.Diagnostics.Debug.WriteLine("Error loading packages from web");
             }
 
+            log.Debug("Filtering packages with empty string to refresh list");
             FilterPackages("");
             //await CacheAllPackages();
             
@@ -134,7 +142,9 @@ namespace ROR2ModManager.Pages.Install
         public async Task PopulatePackagesFromWeb()
         {
             Package[] WebPackages = await ApiAccess.GetPackages();
+            log.Debug($"Collected {WebPackages.Length} packages from web");
             AllPackages = AllPackages.Union(WebPackages).ToArray();
+            log.Debug($"{AllPackages.Length} packages loaded into [AllPackages]");
         }
 
         public async Task CacheAllPackages()
@@ -147,12 +157,32 @@ namespace ROR2ModManager.Pages.Install
             }
         }
 
-        public async void FilterPackages(string input="")
+        public void FilterPackages(string input="")
         {
+            Packages.Add(AllPackages[0]);
+            return;
             input = input.ToLower();
+            log.Debug("ff");
             var hits = AllPackages.Where((x) => x.full_name.ToLower().Contains(input)).ToList();
+            log.Debug($"Filtered to produce {hits.Count} hits");
             Packages.Clear();
-            hits.ForEach((x) => Packages.Add(x));
+            log.Debug($"Adding hits to list...");
+            try
+            {
+                var c = 0;
+                foreach(var x in hits)
+                {
+                    log.Debug((++c).ToString());
+                    Packages.Add(x);
+                    if (c > 20)
+                        break;
+                }
+                
+            } catch(Exception ex)
+            {
+                log.Info(ex.StackTrace);
+            }
+            
         }
 
         

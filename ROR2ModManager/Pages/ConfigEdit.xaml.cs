@@ -34,6 +34,7 @@ namespace ROR2ModManager.Pages
         {
             try
             {
+                //TODO: This crashes if [ror2] is not set
                 return await (await StorageFolder.GetFolderFromPathAsync(ApplicationData.Current.LocalSettings.Values["ror2"] as string)).GetFolderAsync(@"BepInEx\config");
             }
             catch (FileNotFoundException)
