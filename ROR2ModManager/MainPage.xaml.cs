@@ -37,8 +37,8 @@ namespace ROR2ModManager
     {
 
         public static MainPage Current;
-        public bool IsApplicationUpToDate = true;
         public UWPTools.Changelog.ChangelogManager ChangelogManager = new UWPTools.Changelog.ChangelogManager();
+        public UWPTools.Versions.VersionHelper VersionHelper = new UWPTools.Versions.VersionHelper(new Uri("http://ror2modman.ethanbrews.me/RoR2ModMan.appinstaller"));
 
         public ContentDialog ChangelogDialog { private set; get; }
         public MainPage()
@@ -68,23 +68,8 @@ namespace ROR2ModManager
             {
                 try
                 {
-                    var appinstaller_xml = await new WebClient().DownloadStringTaskAsync("http://ror2modman.ethanbrews.me/RoR2ModMan.appinstaller");
-                    XmlDocument xmlDoc = new XmlDocument();
-                    xmlDoc.LoadXml(appinstaller_xml);
-
-                    var node = xmlDoc.GetElementsByTagName("AppInstaller")[0];
-                    var latestVersionString = node.Attributes.GetNamedItem("Version").InnerText;
-                    System.Diagnostics.Debug.WriteLine("The latest version of the app is " + latestVersionString);
-
-                    var latestVersion = PackageVersionHelper.ToPackageVersion(latestVersionString);
-
-                    if (!package.Id.Version.Equals(latestVersion) && (ApplicationData.Current.LocalSettings.Values["showUpdateInNavBar"] as bool? ?? true))
-                    {
-                        await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () => {
-                            UpdateLauncherButton.Visibility = Visibility.Visible;
-                            IsApplicationUpToDate = false;
-                        });
-                    }
+                    if (!await VersionHelper.IsApplicationUpToDateAsync())
+                        await UWPTools.Threads.ThreadHelper.RunInUIThread(() => UpdateLauncherButton.Visibility = Visibility.Visible);
                 } catch
                 {}
             });

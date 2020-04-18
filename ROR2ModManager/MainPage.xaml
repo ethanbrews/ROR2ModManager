@@ -27,8 +27,10 @@
             <Frame x:Name="contentFrame" x:FieldModifier="public" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
 
             <NavigationView.PaneFooter>
-                <NavigationViewItem Icon="Download" Content="Update App" Name="UpdateLauncherButton" Tapped="UpdateLauncherButton_Tapped" Visibility="Collapsed" />
-                
+                <NavigationViewItem Padding="0 0 15 0" BorderThickness="0" Name="UpdateLauncherButton" Tapped="UpdateLauncherButton_Tapped" Visibility="Collapsed">
+                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE896;" />
+                </NavigationViewItem>
+
             </NavigationView.PaneFooter>
 
         </NavigationView>

@@ -39,7 +39,7 @@ namespace ROR2ModManager.Pages.Settings
             this.InitializeComponent();
         }
 
-        private void Page_Loading(FrameworkElement sender, object args)
+        private async void Page_Loading(FrameworkElement sender, object args)
         {
             ApplicationInstallLocation = ApplicationData.Current.LocalFolder.Path;
             RiskOfRainInstallationLocation = ApplicationData.Current.LocalSettings.Values["ror2"] as string;
@@ -58,7 +58,7 @@ namespace ROR2ModManager.Pages.Settings
             //CurrentApplicationVersionHasAssociatedChangelog = (MainPage.Current.ChangelogManager.VersionHasAssociatedChangelog() ? Visibility.Visible : Visibility.Collapsed);
             CurrentApplicationVersionHasAssociatedChangelog = MainPage.Current.ChangelogManager.VersionHasAssociatedChangelog();
 
-            if (MainPage.Current.IsApplicationUpToDate)
+            if (await MainPage.Current.VersionHelper.IsApplicationUpToDateAsync())
                 UpdateAppButton_Reinstall.Visibility = Visibility.Visible;
             else
                 UpdateAppButton_Update.Visibility = Visibility.Visible;

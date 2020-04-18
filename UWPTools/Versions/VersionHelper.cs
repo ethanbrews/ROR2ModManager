@@ -16,7 +16,7 @@ namespace UWPTools.Versions
     /// <summary>
     /// Detects when the app is running on a new version for the first time.
     /// </summary>
-    public abstract class VersionHelper
+    public class VersionHelper
     {
 
         private static WebClient client;
@@ -59,6 +59,7 @@ namespace UWPTools.Versions
                 var appInstaller = serializer.Deserialize(reader) as Data.UWPAppInstaller.AppInstaller;
                 LatestAppVersionOnServer = appInstaller.Version;
                 IsAppUpToDate = (LatestAppVersionOnServer == AppPackageHelper.GetAppPackageVersionAsString());
+                System.Diagnostics.Debug.WriteLine($"LatestAppVersionOnServer = {LatestAppVersionOnServer}, CurrentAppVersion = {AppPackageHelper.GetAppPackageVersionAsString()}");
                 return IsAppUpToDate.Value;
             }
         }
