@@ -9,7 +9,7 @@
   <Identity
     Name="7e71b5fe-ab00-4ddf-bf90-3f2edcb71675"
     Publisher="CN=Ethan Brews"
-    Version="1.0.0.0" />
+    Version="1.0.4.0" />
 
   <Properties>
     <DisplayName>RoR2ModMan</DisplayName>
@@ -39,6 +39,15 @@
         <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png" />
         <uap:SplashScreen Image="Images\SplashScreen.png" />
       </uap:VisualElements>
+      <Extensions>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name=".r2pm">
+            <uap:SupportedFileTypes>
+              <uap:FileType>.r2pm</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
     </Application>
   </Applications>
 

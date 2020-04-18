@@ -1,0 +1,17 @@
+﻿<Page
+    x:Class="ROR2ModManager.Changelogs._1_0_5_0"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ROR2ModManager.Changelogs"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource RegionBrush}">
+
+    <StackPanel>
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Added a changelog viewer" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Fixed profile sharing issue" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Redesigned theme switcher in settings" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Fixed navigation bar issues" />
+    </StackPanel>
+</Page>

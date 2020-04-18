@@ -12,6 +12,10 @@ using Microsoft.Extensions.Logging;
 using Windows.Storage;
 using MetroLog;
 using MetroLog.Targets;
+using Windows.ApplicationModel.Core;
+using Windows.UI.ViewManagement;
+using Windows.UI;
+using System.Collections.Generic;
 
 namespace ROR2ModManager
 {
@@ -20,6 +24,9 @@ namespace ROR2ModManager
     /// </summary>
     sealed partial class App : Application
     {
+
+        public static Dictionary<string, ResourceDictionary> ThemeList;
+
         /// <summary>
         /// Initializes the singleton application object.  This is the first line of authored code
         /// executed, and as such is the logical equivalent of main() or WinMain().
@@ -33,20 +40,24 @@ namespace ROR2ModManager
         protected override async void OnFileActivated(FileActivatedEventArgs args)
         {
             BinaryFormatter formatter = new BinaryFormatter();
-            var file = args.Files[0];
+            IStorageItem file = args.Files[0];
             if (!file.IsOfType(StorageItemTypes.File))
-                throw new Exception("Can only import .r2pm formatted files.");
+            {
+                await new ContentDialog { Title = "Invalid File Format", Content = "Can only import .r2pm formatted files.", PrimaryButtonText = "Close" }.ShowAsync();
+                return;
+            }
             try
             {
                 using (var fs = await (file as StorageFile).OpenStreamForReadAsync())
                 {
                     var profile = formatter.Deserialize(fs) as Profile;
-                    MainPage.Instance.contentFrame.Navigate(typeof(Pages.Install.Select), new Pages.Install.SelectParameters { packagesLW = profile.PacksLW });
+                    MainPage.Current.contentFrame.Navigate(typeof(Pages.Install.Select), new Pages.Install.SelectParameters { packagesLW = profile.PacksLW });
                 }
             }
             catch
             {
-                throw new Exception("Invalid Formatting");
+                await new ContentDialog { Title = "Corrupt or Incorrect File", Content = "Could not import file. It may be corrupted.", PrimaryButtonText = "Close" }.ShowAsync();
+                return;
             }
             
         }
@@ -113,6 +124,58 @@ namespace ROR2ModManager
                 // Ensure the current window is active
                 Window.Current.Activate();
             }
+
+            ThemeList = new Dictionary<string, ResourceDictionary>();
+            ThemeList.Add("default", LoadResourceDictionary("ms-appx:///Themes/AppDefault.xaml"));
+            ThemeList.Add("windows", LoadResourceDictionary("ms-appx:///Themes/WindowsDefault.xaml"));
+            
+
+            SetApplicationThemeBySettingsValue();
+            ExtendAcrylicIntoTitleBar();
+        }
+
+
+        private void ExtendAcrylicIntoTitleBar()
+        {
+            var coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
+            coreTitleBar.ExtendViewIntoTitleBar = true;
+
+            //remove the solid-colored backgrounds behind the caption controls and system back button
+            var viewTitleBar = ApplicationView.GetForCurrentView().TitleBar;
+            viewTitleBar.ButtonBackgroundColor = Colors.Transparent;
+            viewTitleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+            viewTitleBar.ButtonForegroundColor = (Color)Resources["SystemBaseHighColor"];
+        }
+
+        public static void SetApplicationThemeBySettingsValue()
+        {
+
+            // First set theme to light, dark or default mode.
+            Frame rootFrame = Window.Current.Content as Frame;
+            switch (ApplicationData.Current.LocalSettings.Values["theme-shade"])
+            {
+                case "Light":
+                    rootFrame.RequestedTheme = ElementTheme.Light;
+                    break;
+                case "Dark":
+                    rootFrame.RequestedTheme = ElementTheme.Dark;
+                    break;
+                default:
+                    rootFrame.RequestedTheme = ElementTheme.Default;
+                    break;
+            }
+
+            // Now load the resources file for the colour scheme.
+            //System.Diagnostics.Debug.WriteLine($"App LocalSettings [theme-name] = {ApplicationData.Current.LocalSettings.Values["theme-name"] as string}");
+            //var themeName = ApplicationData.Current.LocalSettings.Values["theme-name"] as string ?? "default";
+            //Application.Current.Resources = ThemeList[themeName];
+        }
+
+        private ResourceDictionary LoadResourceDictionary(string themeResourcesFileName)
+        {
+            ResourceDictionary dict = new ResourceDictionary();
+            Application.LoadComponent(dict, new Uri(themeResourcesFileName));
+            return dict;
         }
 
         /// <summary>

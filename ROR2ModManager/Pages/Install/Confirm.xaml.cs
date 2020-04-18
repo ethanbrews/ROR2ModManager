@@ -31,7 +31,7 @@ namespace ROR2ModManager.Pages.Install
     public sealed partial class Confirm : Page
     {
 
-        ObservableCollection<String> PackagesNames = new ObservableCollection<String>();
+        ObservableCollection<String> PackagesNames = new ObservableCollection<string>();
         ObservableCollection<String> ProfileNames = new ObservableCollection<string>();
         private ConfirmParameters parameters;
         public Confirm()
@@ -91,7 +91,7 @@ namespace ROR2ModManager.Pages.Install
         {
             if (IsInputValid())
             {
-                MainPage.Instance.contentFrame.Navigate(typeof(Pages.Install.DoInstall), new Install.DoInstallParameters { Packages = parameters.Packages, ProfileName=ProfileNameComboBox.Text });
+                MainPage.Current.contentFrame.Navigate(typeof(Pages.Install.DoInstall), new Install.DoInstallParameters { Packages = parameters.Packages, ProfileName=ProfileNameComboBox.Text });
             } else
             {
                 await new ContentDialog

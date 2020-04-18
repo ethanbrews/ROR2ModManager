@@ -1,18 +1,28 @@
-﻿using System;
+﻿using Microsoft.Toolkit.Uwp.Helpers;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
+using System.Xml;
+using UWPTools.Changelog;
+using Windows.ApplicationModel;
+using Windows.ApplicationModel.Core;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Services.Store;
 using Windows.Storage;
 using Windows.System;
 using Windows.UI.Core;
+using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Markup;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
@@ -26,21 +36,84 @@ namespace ROR2ModManager
     public sealed partial class MainPage : Page
     {
 
-        public static MainPage Instance;
+        public static MainPage Current;
+        public bool IsApplicationUpToDate = true;
+        public UWPTools.Changelog.ChangelogManager ChangelogManager = new UWPTools.Changelog.ChangelogManager();
+
+        public ContentDialog ChangelogDialog { private set; get; }
         public MainPage()
         {
-            Instance = this;
+            Current = this;
             this.InitializeComponent();
             Window.Current.CoreWindow.CharacterReceived += CoreWindow_CharacterReceived;
+
+            // Set title bar
+            var coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
+            Package package = Package.Current;
+            AppTitle.Text = string.Format("{0} {1}.{2}.{3}.{4}", package.DisplayName, package.Id.Version.Major, package.Id.Version.Minor, package.Id.Version.Build, package.Id.Version.Revision);
+            coreTitleBar.ExtendViewIntoTitleBar = true;
+            Window.Current.CoreWindow.SizeChanged += (s, e) => UpdateAppTitle();
+            coreTitleBar.LayoutMetricsChanged += (s, e) => UpdateAppTitle();
+
+            nav.BackRequested += Nav_BackRequested;
+
+            ChangelogManager.AddChangelogForVersion("1.0.5.0", typeof(Changelogs._1_0_5_0));
+
+            try { _ = ChangelogManager.ShowChangelogForCurrentVersionIfNotPreviouslyShown(); }
+            catch (UWPTools.Exceptions.ChangelogNotFoundForCurrentVersionException) { /* Ignore this - there's no changelog for this version */ }
+                
+
+            // This adds an 'Update Now' button to the nav bar and updates [IsApplicationUpToDate] so that the app can know if it's running the latest version
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    var appinstaller_xml = await new WebClient().DownloadStringTaskAsync("http://ror2modman.ethanbrews.me/RoR2ModMan.appinstaller");
+                    XmlDocument xmlDoc = new XmlDocument();
+                    xmlDoc.LoadXml(appinstaller_xml);
+
+                    var node = xmlDoc.GetElementsByTagName("AppInstaller")[0];
+                    var latestVersionString = node.Attributes.GetNamedItem("Version").InnerText;
+                    System.Diagnostics.Debug.WriteLine("The latest version of the app is " + latestVersionString);
+
+                    var latestVersion = PackageVersionHelper.ToPackageVersion(latestVersionString);
+
+                    if (!package.Id.Version.Equals(latestVersion) && (ApplicationData.Current.LocalSettings.Values["showUpdateInNavBar"] as bool? ?? true))
+                    {
+                        await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () => {
+                            UpdateLauncherButton.Visibility = Visibility.Visible;
+                            IsApplicationUpToDate = false;
+                        });
+                    }
+                } catch
+                {}
+            });
         }
 
-        private async void CoreWindow_CharacterReceived(Windows.UI.Core.CoreWindow sender, Windows.UI.Core.CharacterReceivedEventArgs args)
+        private void UpdateAppTitle()
         {
-            if (args.KeyCode == 72) //H
-            {
-                await Launcher.LaunchFolderAsync(ApplicationData.Current.LocalFolder);
-            }
-            
+            var full = (ApplicationView.GetForCurrentView().IsFullScreenMode);
+            var left = 12 + (full ? 0 : CoreApplication.GetCurrentView().TitleBar.SystemOverlayLeftInset);
+            AppTitle.Margin = new Thickness(left, 8, 0, 0);
+        }
+
+        private void Nav_BackRequested(NavigationView sender, NavigationViewBackRequestedEventArgs args)
+        {
+            if (contentFrame.CanGoBack)
+                contentFrame.GoBack();
+
+            nav.IsBackEnabled = contentFrame.CanGoBack;
+        }
+
+        private void CoreWindow_CharacterReceived(Windows.UI.Core.CoreWindow sender, Windows.UI.Core.CharacterReceivedEventArgs args)
+        {
+            System.Diagnostics.Debug.WriteLine("KeyDown: " + args.KeyCode.ToString());
+            if (args.KeyCode == 48)
+                contentFrame.Navigate(typeof(Pages.Settings.Root));
+            else if (args.KeyCode == 49)
+                SwitchToPageByTag("Play");
+            else if (args.KeyCode == 50)
+                SwitchToPageByTag("Install");
         }
 
         public void SwitchToPageByTag(string tag)
@@ -49,6 +122,7 @@ namespace ROR2ModManager
             {
                 case "Play":
                     contentFrame.Navigate(typeof(Pages.Play));
+                    
                     break;
                 case "Install":
                     contentFrame.Navigate(typeof(Pages.Install.Select));
@@ -57,6 +131,7 @@ namespace ROR2ModManager
                     contentFrame.Navigate(typeof(Pages.ConfigEdit));
                     break;
             }
+            nav.SelectedItem = nav.MenuItems.Where(x => (x as FrameworkElement).Tag as string == tag).FirstOrDefault();
         }
 
         private void NavigationView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
@@ -67,11 +142,18 @@ namespace ROR2ModManager
             }
 
             SwitchToPageByTag(((NavigationViewItem)args.SelectedItem).Tag as string);
+            nav.IsBackEnabled = contentFrame.CanGoBack;
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
             await ProfileManager.LoadProfilesFromFile();
+            SwitchToPageByTag("Play");
+        }
+
+        private async void UpdateLauncherButton_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            await Launcher.LaunchUriAsync(new Uri("ms-appinstaller:?source=http://ror2modman.ethanbrews.me/RoR2ModMan.appinstaller"));
         }
     }
 }

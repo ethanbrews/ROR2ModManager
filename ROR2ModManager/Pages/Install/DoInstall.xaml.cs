@@ -112,7 +112,7 @@ namespace ROR2ModManager.Pages.Install
                     await ProfileManager.AddNewProfile(parameters.ProfileName, parameters.Packages.ToArray());
                     await Task.Delay(600);
                     await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () => {
-                        MainPage.Instance.SwitchToPageByTag("Play");
+                        MainPage.Current.SwitchToPageByTag("Play");
                     });
                     
                 });

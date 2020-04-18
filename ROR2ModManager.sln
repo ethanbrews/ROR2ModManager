@@ -7,7 +7,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ROR2ModManager", "ROR2ModMa
 EndProject
 Project("{C7167F0D-BC9F-4E6E-AFE1-012C56B48DB5}") = "RoR2ModMan", "RoR2ModMan\RoR2ModMan.wapproj", "{15A3B4C4-7E12-4DA2-BD79-16B920CEFA93}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "UWPTools", "UWPTools\UWPTools.shproj", "{3C666D1A-70F3-4CF1-AFC6-E55BFCFBB23A}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		UWPTools\UWPTools.projitems*{3c666d1a-70f3-4cf1-afc6-e55bfcfbb23a}*SharedItemsImports = 13
+		UWPTools\UWPTools.projitems*{d1153bd7-d045-49ca-99e9-6b0e58b0444e}*SharedItemsImports = 4
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|ARM = Debug|ARM

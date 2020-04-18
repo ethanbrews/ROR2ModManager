@@ -9,14 +9,29 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
     Loaded="Page_Loaded">
 
-    <Grid>
+    <Grid Background="{ThemeResource RegionBrush}">
+
+        <TextBlock x:Name="AppTitle"
+                   HorizontalAlignment="Left"
+                   xmlns:appmodel="using:Windows.ApplicationModel"
+                   Style="{StaticResource CaptionTextBlockStyle}"
+                   IsHitTestVisible="False"
+                   Canvas.ZIndex="1" />
+
         <NavigationView PaneDisplayMode="Top" SelectionChanged="NavigationView_SelectionChanged" Name="nav" x:FieldModifier="public">
             <NavigationView.MenuItems>
                 <NavigationViewItem Icon="Play" Content="Play Game" Tag="Play" />
                 <NavigationViewItem Icon="Download" Content="Create Profile" Tag="Install" />
-                <NavigationViewItem Icon="Edit" Content="Edit Mod Configuration" Tag="Config" />
+                <!--<NavigationViewItem Icon="Edit" Content="Edit Mod Configuration" Tag="Config" />-->
             </NavigationView.MenuItems>
             <Frame x:Name="contentFrame" x:FieldModifier="public" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+
+            <NavigationView.PaneFooter>
+                <NavigationViewItem Icon="Download" Content="Update App" Name="UpdateLauncherButton" Tapped="UpdateLauncherButton_Tapped" Visibility="Collapsed" />
+                
+            </NavigationView.PaneFooter>
+
         </NavigationView>
+
     </Grid>
 </Page>

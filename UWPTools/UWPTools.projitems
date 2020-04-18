@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>3c666d1a-70f3-4cf1-afc6-e55bfcfbb23a</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>UWPTools</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Changelog\ChangelogDialog.xaml.cs">
+      <DependentUpon>ChangelogDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)Changelog\ChangelogManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Data\UWPAppInstaller.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Exceptions\ChangelogNotFoundForCurrentVersionException.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Exceptions\ExceptionBase.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Settings\AppPackageHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Settings\LocalSettingsHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Themes\ThemeIcon.xaml.cs">
+      <DependentUpon>ThemeIcon.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)Themes\ThemeManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Versions\VersionHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Storage\StorageItemExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Threads\ThreadHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ValueConverters\BoolToVisibilityConverter.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="$(MSBuildThisFileDirectory)Changelog\ChangelogDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="$(MSBuildThisFileDirectory)Themes\ThemeIcon.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)Versions\" />
+  </ItemGroup>
+</Project>

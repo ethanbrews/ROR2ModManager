@@ -53,249 +53,163 @@ namespace ROR2ModManager.Pages.Install
     /// </summary>
     public sealed partial class Select : Page
     {
-        //Packages shown in ListView
-        ObservableCollection<Package> Packages = new ObservableCollection<Package>();
-        //All Avaliable packages. This is cached in ApplicationData.Current.LocalFolder:ThunderstorePackagesCache.dat
-        Package[] AllPackages = new Package[0];
-        //Packages ticked by the user are stored here to be passed to next Page.
-        List<Package> SelectedPackages = new List<Package>();
+
+        private Package[] Packages;
+        private ObservableCollection<Package> PackagesFiltered;
 
         ILogger log = LogManagerFactory.DefaultLogManager.GetLogger<MainPage>();
-
-        private string lastSearchQuery; // Quick fix so that holding shift doesn't refresh the list. Should maybe use a custom ObservableCollection that does this check?
 
         public Select()
         {
             this.InitializeComponent();
         }
 
-        /// <summary>
-        /// Loads the packages cached in ApplicationData.Current.LocalFolder:ThunderstorePackagesCache.dat
-        /// to AllPackages using BinaryFormatter
-        /// </summary>
-        /// <returns></returns>
-        public async Task LoadLocalPackageIndex()
-        {
-            log.Debug("Loading Local Package Index...");
-            Windows.Storage.StorageFolder localFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
-            if (!await localFolder.FileExistsAsync("ThunderstorePackagesCache.dat"))
-            {
-                log.Debug("Index doesn't exist");
-                return;
-            }
-                
-            BinaryFormatter bf = new BinaryFormatter();
-
-            try
-            {
-                using (var stream = await (await localFolder.GetFileAsync("ThunderstorePackagesCache.dat")).OpenStreamForReadAsync())
-                {
-                    AllPackages = (Package[])bf.Deserialize(stream);
-                }
-            } catch (SerializationException)
-            {
-                log.Debug("A SerializationException occurred when deserializing ThunderstorePackagesCache.dat");
-                return;
-            }
-        }
-
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
-            //await LoadLocalPackageIndex();
-            //FilterPackages("");
-            log.Debug("Navigated to Select page");
-            try
+            InstallButton.IsEnabled = false;
+            _ = Task.Run(async () =>
             {
-                await PopulatePackagesFromWeb();
-            }
-            catch (System.Net.WebException)
-            {
-                System.Diagnostics.Debug.WriteLine("Error loading packages from web");
-            }
+                var PackagesLocal = await ApiAccess.GetPackages();
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () => {
+                    Packages = PackagesLocal;
+                    PackagesFiltered = new ObservableCollection<Package>(Packages);
+                    ModListView.ItemsSource = PackagesFiltered;
 
-            log.Debug("Filtering packages with empty string to refresh list");
-            FilterPackages("");
-            //await CacheAllPackages();
-            
-            if ((e.Parameter as SelectParameters)?.packagesLW != null)
-            {
-                foreach(var packlw in (e.Parameter as SelectParameters).packagesLW)
-                {
-                    var pack = Packages.Where(x => x.full_name == packlw.full_name).FirstOrDefault();
-                    if (pack is null)
+                    if ((e.Parameter as SelectParameters)?.packagesLW != null)
                     {
-                        await new ContentDialog { Title = "Pack not found", Content = "The pack {packlw.full_name}\ncannot be found on thunderstore.io and may be deleted or moved.", PrimaryButtonText = "Close", IsSecondaryButtonEnabled = false }.ShowAsync();
-                        MainPage.Instance.contentFrame.Navigate(typeof(Pages.Play));
-                        return;
+                        foreach (var packlw in (e.Parameter as SelectParameters).packagesLW)
+                        {
+                            var pack = Packages.Where(x => x.full_name == packlw.full_name).FirstOrDefault();
+                            if (pack is null)
+                            {
+                                await new ContentDialog { Title = "Pack not found", Content = "The pack {packlw.full_name}\ncannot be found on thunderstore.io and may be deleted or moved.", PrimaryButtonText = "Close", IsSecondaryButtonEnabled = false }.ShowAsync();
+                                MainPage.Current.contentFrame.Navigate(typeof(Pages.Play));
+                                return;
+                            }
+                            pack._is_selected = true;
+                            pack._selected_version = packlw.version;
+                            pack.markDirty();
+                        }
+                        InstallButton.IsEnabled = true;
                     }
-                    pack._is_selected = true;
-                    pack._selected_version = packlw.version;
-                    pack.markDirty();
-                } 
-            }
+                });
+            });
         }
 
-        /// <summary>
-        /// Loads packages from thunderstore.io and merges with AllPackages.
-        /// </summary>
-        /// <returns></returns>
-        public async Task PopulatePackagesFromWeb()
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            Package[] WebPackages = await ApiAccess.GetPackages();
-            log.Debug($"Collected {WebPackages.Length} packages from web");
-            AllPackages = AllPackages.Union(WebPackages).ToArray();
-            log.Debug($"{AllPackages.Length} packages loaded into [AllPackages]");
+            FilterList();
         }
 
-        public async Task CacheAllPackages()
+        private void FilterList()
         {
-            Windows.Storage.StorageFolder localFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
-            BinaryFormatter bf = new BinaryFormatter();
-            using (var stream = await (await localFolder.CreateFileAsync("ThunderstorePackagesCache.dat", Windows.Storage.CreationCollisionOption.ReplaceExisting)).OpenStreamForWriteAsync())
+            List<Package> TempFiltered;
+
+            /* Make sure all text is case-insensitive when comparing, and make sure 
+            the filtered items are in a List object */
+            TempFiltered = Packages.Where(pkg => pkg.full_name.Contains(FilterTextBox.Text, StringComparison.InvariantCultureIgnoreCase)).ToList();
+            
+
+            /* Go through TempFiltered and compare it with the current PeopleFiltered collection,
+            adding and subtracting items as necessary: */
+
+            // First, remove any Person objects in PeopleFiltered that are not in TempFiltered
+            for (int i = PackagesFiltered.Count - 1; i >= 0; i--)
             {
-                bf.Serialize(stream, AllPackages);
-            }
-        }
-
-        public void FilterPackages(string input="")
-        {
-            Packages.Add(AllPackages[0]);
-            return;
-            input = input.ToLower();
-            log.Debug("ff");
-            var hits = AllPackages.Where((x) => x.full_name.ToLower().Contains(input)).ToList();
-            log.Debug($"Filtered to produce {hits.Count} hits");
-            Packages.Clear();
-            log.Debug($"Adding hits to list...");
-            try
-            {
-                var c = 0;
-                foreach(var x in hits)
+                var item = PackagesFiltered[i];
+                if (!TempFiltered.Contains(item))
                 {
-                    log.Debug((++c).ToString());
-                    Packages.Add(x);
-                    if (c > 20)
-                        break;
+                    PackagesFiltered.Remove(item);
                 }
-                
-            } catch(Exception ex)
-            {
-                log.Info(ex.StackTrace);
             }
-            
-        }
 
-        
+            /* Next, add back any Person objects that are included in TempFiltered and may 
+            not currently be in PeopleFiltered (in case of a backspace) */
 
-        private void Page_Loading(FrameworkElement sender, object args)
-        {
-            
-            
-        }
-
-        private void TextBox_KeyDown(object sender, KeyRoutedEventArgs e)
-        {
-            var text = ((TextBox)sender).Text;
-            if (text != lastSearchQuery)
+            foreach (var item in TempFiltered)
             {
-                FilterPackages(text);
-                lastSearchQuery = text;
+                if (!PackagesFiltered.Contains(item))
+                {
+                    PackagesFiltered.Add(item);
+                }
             }
-                
         }
 
-        private async void DetailsButton_Click(object sender, RoutedEventArgs e)
+        private API.Version GetSelectedVersionForPackage(Package package)
         {
-            await new PackInfo().ShowAsync();
+            return package.versions.Where(x => x.version_number == package._selected_version).First();
         }
 
-        private void InstallButton_Click(object sender, RoutedEventArgs e)
+        private List<Package> GetDependenciesForPackage(Package package)
         {
-            MainPage.Instance.contentFrame.Navigate(typeof(Pages.Install.Confirm), new Install.ConfirmParameters { Packages = SelectedPackages });
+            var result = new List<Package>();
+            var dependencies = GetSelectedVersionForPackage(package).dependencies;
+            foreach(var dep in dependencies)
+            {
+                foreach(var p in Packages)
+                {
+                    if (p.versions.Where(x => x.full_name == dep as string).FirstOrDefault() != null || p.full_name == dep as string)
+                    {
+                        result.Add(p);
+                    }
+                }
+            }
+            return result;
+        }
+
+        private void CheckDependencies()
+        {
+            var FoundDependencies = new List<Package>();
+            foreach(var p in Packages)
+            {
+                if (p._is_selected_by_user)
+                    FoundDependencies.AddRange(GetDependenciesForPackage(p));
+            }
+
+            foreach(var p in Packages)
+            {
+                if (FoundDependencies.Contains(p))
+                {
+                    p._is_selected = true;
+                    p._is_dependency = true;
+                } else
+                {
+                    p._is_dependency = false;
+                    if (!p._is_selected_by_user)
+                        p._is_selected = false;
+                }
+                p.markDirty();
+            }
+
         }
 
         private void CheckBox_Click(object sender, RoutedEventArgs e)
         {
-            
-            Package item = (Package)(sender as CheckBox).DataContext;
-            if (SelectedPackages.Contains(item) && !((CheckBox)sender).IsChecked.Value)
-            {
-                SelectedPackages.Remove(item);
-                var selectedVersion = item.versions.Where(x => (x.version_number == item._selected_version)).First();
-                foreach(var dependencyItemName in selectedVersion.dependencies)
-                {
-                    var isStillRequired = false;
-                    foreach(var selectedPackage in SelectedPackages)
-                    {
-                        var version = selectedPackage.versions.Where(x => x.version_number == selectedPackage._selected_version).First();
-                        var modsList = new List<Package>();
-                        foreach (var v in version.dependencies)
-                        {
-                            foreach (var p in SelectedPackages)
-                            {
-                                //if (p.versions.Where(x => x.full_name == v as string).FirstOrDefault() != null)
-                                if (p.versions.Where(x => x.full_name == v as string).FirstOrDefault() != null)
-                                    isStillRequired = true;
-                                //System.Diagnostics.Debug.WriteLine($"[{string.Join(", ", p.versions)}] doesn't contain \"{v}\"");
-                            }
-                        }
-
-                    }
-
-                    if (!isStillRequired)
-                    {
-                        foreach(var p in Packages)
-                        {
-                            var version = p.versions.Where(x => x.full_name == dependencyItemName as string).FirstOrDefault();
-                            if (version != null)
-                            {
-                                SelectedPackages.Remove(p);
-                                p._is_dependency = false;
-                                p._is_selected = false;
-                                p.markDirty();
-                            }
-                                
-                        }
-                    }
-                }
-                
-            } else if (!SelectedPackages.Contains(item) && ((CheckBox)sender).IsChecked.Value)
-            {
-                SelectedPackages.Add(item);
-                var version = item.versions.Where(x => (x.version_number == item._selected_version)).First();
-                foreach(var dependency in version.dependencies)
-                {
-                    Package dep = null;
-                    foreach (var p in Packages)
-                    {
-                        var depv = p.versions.Where(x => x.full_name == dependency as string).FirstOrDefault();
-                        if (depv != null)
-                        {
-                            dep = p;
-                            p._selected_version = depv.version_number;
-                            continue;
-                        }
-                    }
-
-                    if (dep is null)
-                        continue;
-                    
-                    SelectedPackages.Add(dep);
-                    dep._is_selected = true;
-                    dep._is_dependency = true;
-                    dep.markDirty();
-                }
-                    
-            }
-                
+            var cb = (sender as CheckBox);
+            (cb.DataContext as Package)._is_selected_by_user = cb.IsChecked.GetValueOrDefault(false);
+            CheckDependencies();
+            InstallButton.IsEnabled = (Packages.Where(x => x._is_selected).FirstOrDefault() != null);
         }
 
         private void VersionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selected = ((string)((ComboBox)sender).SelectedValue);
-            var pkg = (Package)(sender as ComboBox).DataContext;
 
-            pkg._selected_version = selected;
+        }
+
+        private void InstallButton_Click(object sender, RoutedEventArgs e)
+        {
+            var parameters = new ConfirmParameters { Packages = Packages.Where(x => x._is_selected).ToList() };
+            MainPage.Current.contentFrame.Navigate(typeof(Pages.Install.Confirm), parameters);
+        }
+
+        private void DetailsButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            FilterList();
         }
     }
 }

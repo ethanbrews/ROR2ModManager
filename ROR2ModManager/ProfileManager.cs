@@ -31,6 +31,8 @@ namespace ROR2ModManager
             try
             {
                 Profiles = JsonConvert.DeserializeObject<List<Profile>>(await FileIO.ReadTextAsync(await localFolder.GetFileAsync("profiles.json")));
+                if (Profiles == null)
+                    throw new Exception();
             } catch (Exception)
             {
                 Profiles = new List<Profile>();
@@ -51,6 +53,60 @@ namespace ROR2ModManager
             }
         }
 
+        public static async Task ChooseRoRInstallFolder(bool ShowInfoDialog = false)
+        {
+            if (ShowInfoDialog)
+                await new ContentDialog
+                {
+                    IsPrimaryButtonEnabled = true,
+                    PrimaryButtonText = "Okay",
+                    Title = "Locate RoR2 Install",
+                    Content = "Please locate the RoR2 install folder.\nThis gives the application permission to install mods to the RoR2 folder."
+                }.ShowAsync();
+            var folderPicker = new Windows.Storage.Pickers.FolderPicker();
+            //folderPicker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.Unspecified;
+            folderPicker.FileTypeFilter.Add("*");
+            var folder = await folderPicker.PickSingleFolderAsync();
+            if (folder is null)
+            {
+                await new ContentDialog
+                {
+                    IsPrimaryButtonEnabled = true,
+                    PrimaryButtonText = "Close",
+                    Title = "Can't find RoR2 Installation",
+                    Content = "No folder was selected. The game cannot be launched."
+                }.ShowAsync();
+                return;
+            }
+
+            if (!System.IO.File.Exists(System.IO.Path.Combine(folder.Path, "Risk of Rain 2.exe")))
+            {
+                var result = await new ContentDialog
+                {
+                    IsPrimaryButtonEnabled = true,
+                    IsSecondaryButtonEnabled = true,
+                    PrimaryButtonText = "Change Folder",
+                    SecondaryButtonText = "Use this folder",
+                    Title = "Are you sure this is correct?",
+                    Content = "The selected folder doesn't contain \"Risk of Rain 2.exe\"\nAre you sure this is the correct folder?"
+                }.ShowAsync();
+
+                if (result == ContentDialogResult.Primary)
+                {
+                    await ChooseRoRInstallFolder();
+                }
+            }
+
+            Windows.Storage.ApplicationData.Current.LocalSettings.Values["ror2"] = folder.Path;
+            StorageApplicationPermissions.FutureAccessList.AddOrReplace("ror2", folder);
+        }
+
+        public static async Task DeleteProfile(Profile profile)
+        {
+            Profiles.Remove(profile);
+            await SaveProfilesToFile();
+        }
+
         public static async Task StartGameForProfile(Profile profile)
         {
             var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
@@ -63,49 +119,8 @@ namespace ROR2ModManager
             {
                 if (ex is System.IO.IOException || ex is ArgumentNullException || true)
                 {
-                    await new ContentDialog
-                    {
-                        IsPrimaryButtonEnabled = true,
-                        PrimaryButtonText = "Okay",
-                        Title = "Locate RoR2 Install",
-                        Content = "Please locate the RoR2 install folder.\nThis gives the application permission to install mods to the RoR2 folder."
-                    }.ShowAsync();
-                    var folderPicker = new Windows.Storage.Pickers.FolderPicker();
-                    //folderPicker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.Unspecified;
-                    folderPicker.FileTypeFilter.Add("*");
-                    folder = await folderPicker.PickSingleFolderAsync();
-                    if (folder is null)
-                    {
-                        await new ContentDialog
-                        {
-                            IsPrimaryButtonEnabled = true,
-                            PrimaryButtonText = "Close",
-                            Title = "Can't find RoR2 Installation",
-                            Content = "No folder was selected. The game cannot be launched."
-                        }.ShowAsync();
-                        return;
-                    }
-
-                    if (!System.IO.File.Exists(System.IO.Path.Combine(folder.Path, "Risk of Rain 2.exe")))
-                    {
-                        var result = await new ContentDialog
-                        {
-                            IsPrimaryButtonEnabled = true,
-                            IsSecondaryButtonEnabled = true,
-                            PrimaryButtonText = "Change Folder",
-                            SecondaryButtonText = "Use this folder",
-                            Title = "Are you sure this is correct?",
-                            Content = "The selected folder doesn't contain \"Risk of Rain 2.exe\"\nAre you sure this is the correct folder?"
-                        }.ShowAsync();
-
-                        if (result == ContentDialogResult.Primary)
-                        {
-                            await StartGameForProfile(profile);
-                        }
-                    }
-
-                    localSettings.Values["ror2"] = folder.Path;
-                    StorageApplicationPermissions.FutureAccessList.AddOrReplace("ror2", folder);
+                    await ChooseRoRInstallFolder(true);
+                    folder = (await StorageFolder.GetFolderFromPathAsync(localSettings.Values["ror2"] as string));
                 } else
                 {
                     System.Diagnostics.Debug.WriteLine(ex.ToString());
@@ -214,7 +229,7 @@ namespace ROR2ModManager
                 System.Diagnostics.Debug.WriteLine("(3/3) Running game via steam (ID 632360)");
             }
 
-            //await Launcher.LaunchUriAsync(new Uri("steam://rungameid/632360"));
+            await Launcher.LaunchUriAsync(new Uri("steam://rungameid/632360"));
         }
 
         public static async Task SaveProfilesToFile()

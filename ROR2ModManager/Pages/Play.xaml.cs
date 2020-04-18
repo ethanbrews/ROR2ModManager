@@ -55,6 +55,7 @@ namespace ROR2ModManager.Pages
                 {
                     Height = 90,
                     Margin = new Thickness(8),
+                    Tag = p.Name,
                     Padding = new Thickness(10, 5, 5, 5),
                     BorderThickness = new Thickness(3),
                     BorderBrush = this.Resources["SystemControlBackgroundListMediumRevealBorderBrush"] as Brush
@@ -73,8 +74,7 @@ namespace ROR2ModManager.Pages
 
                 var checkUpdateBtn = new Button
                 {
-                    Content = "Check for mod updates",
-                    IsEnabled = false,
+                    Content = "Update all mods",
                     Margin = new Thickness(0, 5, 0, 0)
                 };
                 checkUpdateBtn.Click += CheckUpdateBtn_Click;
@@ -82,7 +82,7 @@ namespace ROR2ModManager.Pages
                 var exportBtn = new Button { Content = "Share this Profile" };
                 exportBtn.Click += ExportBtn_Click;
 
-                var deleteBtn = new Button { Content = "Delete this profile", IsEnabled = false, Margin = new Thickness(0, 5, 0, 0) };
+                var deleteBtn = new Button { Content = "Delete this profile", Margin = new Thickness(0, 5, 0, 0) };
                 deleteBtn.Click += DeleteBtn_Click;
 
                 // Add buttons to parents
@@ -126,9 +126,11 @@ namespace ROR2ModManager.Pages
             //System.Diagnostics.Debug.WriteLine($"Loaded {this.Profiles.Count()} profiles");
         }
 
-        private void DeleteBtn_Click(object sender, RoutedEventArgs e)
+        private async void DeleteBtn_Click(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            var p = (sender as Button).DataContext as Profile;
+            await ProfileManager.DeleteProfile(p);
+            MainStackPanel.Children.Remove(MainStackPanel.Children.Where(x => (x as FrameworkElement).Tag as string == p.Name as string).First());
         }
 
         private async void ExportBtn_Click(object sender, RoutedEventArgs e)
@@ -158,7 +160,8 @@ namespace ROR2ModManager.Pages
 
         private void CheckUpdateBtn_Click(object sender, RoutedEventArgs e)
         {
-            throw new NotImplementedException();
+            var packslw = ((sender as Button).DataContext as Profile).PacksLW;
+            MainPage.Current.contentFrame.Navigate(typeof(Install.Select), new Install.SelectParameters { packagesLW = packslw });
         }
 
         private async void Button_Play_Click(object sender, RoutedEventArgs e)

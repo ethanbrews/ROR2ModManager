@@ -46,6 +46,9 @@ namespace ROR2ModManager.API
         [DefaultValue(false)]
         public bool _is_dependency { get; set; }
 
+        [DefaultValue(false)]
+        public bool _is_selected_by_user { get; set; }
+
         public string _selected_version { get; set; }
 
         [field: NonSerialized]
@@ -71,6 +74,7 @@ namespace ROR2ModManager.API
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("_selected_version"));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("_is_selected"));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("_is_dependency"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("_is_selected_by_user"));
         }
 
         public bool Equals(Package other)

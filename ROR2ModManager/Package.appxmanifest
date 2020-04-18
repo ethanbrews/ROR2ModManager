@@ -40,16 +40,6 @@
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"/>
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
-      <Extensions>
-        <uap:Extension Category="windows.fileTypeAssociation">
-          <uap:FileTypeAssociation Name="r2pm">
-            <uap:SupportedFileTypes>
-              <uap:FileType>.r2pm</uap:FileType>
-            </uap:SupportedFileTypes>
-            <uap:DisplayName>RoR2 Package Manager Manifest</uap:DisplayName>
-          </uap:FileTypeAssociation>
-        </uap:Extension>
-      </Extensions>
     </Application>
   </Applications>
 
