@@ -19,7 +19,7 @@
         </controls:DockPanel>
         <StackPanel>
             <TextBlock Margin="0 0 0 10" Style="{StaticResource CaptionTextBlockStyle}" Text="Naming this profile allows you to switch between different sets of mods easily." Foreground="{ThemeResource SystemBaseMediumHighColor}" />
-            <ComboBox x:Name="ProfileNameComboBox" Header="Profile Name" IsEditable="True" Width="300" ItemsSource="{x:Bind ProfileNames}" TextSubmitted="ComboBox_TextSubmitted" PlaceholderText="Default" Text="Default"/>
+            <AutoSuggestBox ItemsSource="{x:Bind ProfileNames}" x:Name="ProfileNameBox" Width="300" Header="Profile Name" HorizontalAlignment="Left" />
             <TextBlock x:Name="ProfileNameMessage" Margin="0 0 0 10" Text="A new profile will be created" Foreground="{ThemeResource SystemBaseMediumHighColor}" />
             <ListView ItemsSource="{x:Bind PackagesNames}" SelectionMode="None" BorderThickness="3" BorderBrush="{ThemeResource SystemControlBackgroundListMediumRevealBorderBrush}">
                 

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AppCenter.Analytics;
 using Newtonsoft.Json;
 using Windows.Storage;
 using Windows.Storage.AccessCache;
@@ -18,6 +19,10 @@ namespace ROR2ModManager
     {
         public API.LWPackageData[] PacksLW { get; set; }
         public string Name { get; set; }
+
+        [JsonIgnore]
+        [field: NonSerialized]
+        public bool _IsVanilla { get; set; } = false;
     }
 
     class ProfileManager
@@ -171,7 +176,7 @@ namespace ROR2ModManager
                             {
                                 CopyModFolder = false;
                                 var modPluginsFolder = await modFolder.GetFolderAsync("plugins");
-                                var rorPluginsFolder = await folder.CreateFolderAsync(@"BepInEx\plugins\" + mod.full_name);
+                                var rorPluginsFolder = await folder.CreateFolderAsync(@"BepInEx\plugins\" + mod.full_name, CreationCollisionOption.OpenIfExists);
                                 foreach (var f in await modPluginsFolder.GetItemsAsync())
                                 {
                                     if (f.IsOfType(StorageItemTypes.File))
@@ -228,6 +233,10 @@ namespace ROR2ModManager
 
                 System.Diagnostics.Debug.WriteLine("(3/3) Running game via steam (ID 632360)");
             }
+
+            Analytics.TrackEvent(AnalyticsEventNames.ProfileStarted);
+            var options = new Windows.System.LauncherOptions();
+            options.PreferredApplicationDisplayName = "Steam";
 
             await Launcher.LaunchUriAsync(new Uri("steam://rungameid/632360"));
         }

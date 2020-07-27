@@ -23,6 +23,7 @@ namespace ROR2ModManager.Pages.Install
     public class ConfirmParameters
     {
         public List<Package> Packages;
+        public string DefaultName = null;
     }
 
     /// <summary>
@@ -48,29 +49,41 @@ namespace ROR2ModManager.Pages.Install
                 PackagesNames.Add($"{p.name} {p._selected_version} by {p.owner}");
 
             foreach (var p in ProfileManager.GetProfileNames())
-                ProfileNames.Add(p);
+                if (!ProfileNames.Contains(p) && p != "Vanilla")
+                    ProfileNames.Add(p);
 
+            if (args.DefaultName != null)
+                ProfileNameBox.Text = args.DefaultName;
+               
             ValidateInput();
         }
 
 
         private bool IsInputValid()
         {
-            return true;
+            return ProfileNameBox.Text.ToUpper().All(c => "ABCDEFGHIJKLMNOPQRSTUVWXYZ 1234567890 -_".Contains(c)); //The profile can have spaces
         }
         private void ValidateInput()
         {
-
-            if (ProfileNameComboBox.Text == "Vanilla")
+            System.Diagnostics.Debug.WriteLine($"The ComboBox text = {ProfileNameBox.Text}");
+            if (ProfileNameBox.Text == "Vanilla")
             {
                 ProfileNameMessage.Text = "A profile cannot be named \"Vanilla\"";
+                ProfileNameMessage.Foreground = new SolidColorBrush(Windows.UI.Colors.Red);
+                InstallNowButton.IsEnabled = false;
+                return;
+            }
+
+            if (ProfileNameBox.Text == "")
+            {
+                ProfileNameMessage.Text = "Enter a name for the profile";
                 ProfileNameMessage.Foreground = new SolidColorBrush(Windows.UI.Colors.Red);
                 InstallNowButton.IsEnabled = false;
             }
             
             if (IsInputValid())
             {
-                ProfileNameMessage.Text = (ProfileManager.GetProfileNames().Contains(ProfileNameComboBox.Text) ? "This profile will be overwritten" : "A new profile will be created");
+                ProfileNameMessage.Text = (ProfileManager.GetProfileNames().Contains(ProfileNameBox.Text) ? "This profile will be overwritten" : "A new profile will be created");
                 ProfileNameMessage.Foreground = new SolidColorBrush((Windows.UI.Color)Application.Current.Resources["SystemBaseHighColor"]);
                 InstallNowButton.IsEnabled = true;
 
@@ -82,16 +95,11 @@ namespace ROR2ModManager.Pages.Install
             }
         }
 
-        private void ComboBox_TextSubmitted(ComboBox sender, ComboBoxTextSubmittedEventArgs args)
-        {
-            ValidateInput();
-        }
-
         private async void InstallButton_Click(object sender, RoutedEventArgs e)
         {
             if (IsInputValid())
             {
-                MainPage.Current.contentFrame.Navigate(typeof(Pages.Install.DoInstall), new Install.DoInstallParameters { Packages = parameters.Packages, ProfileName=ProfileNameComboBox.Text });
+                MainPage.Current.contentFrame.Navigate(typeof(Pages.Install.DoInstall), new Install.DoInstallParameters { Packages = parameters.Packages, ProfileName= ProfileNameBox.Text });
             } else
             {
                 await new ContentDialog
@@ -102,6 +110,11 @@ namespace ROR2ModManager.Pages.Install
                 }.ShowAsync();
             }
             
+        }
+
+        private void ProfileNameComboBox_TextSubmitted(ComboBox sender, ComboBoxTextSubmittedEventArgs args)
+        {
+            ValidateInput();
         }
     }
 }

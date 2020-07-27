@@ -19,6 +19,9 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.IO.Compression;
 using Windows.Storage;
+using Microsoft.AppCenter.Analytics;
+using System.Security.Cryptography;
+using Newtonsoft.Json;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -48,6 +51,19 @@ namespace ROR2ModManager.Pages.Install
             downloadsDone = 0;
         }
 
+
+        private async Task<bool> CheckInstalledModVersion(string pkgName, string installedVersion)
+        {
+            try {
+                var file = await ApplicationData.Current.LocalFolder.GetFileAsync(pkgName + "\\manifest.json");
+                var text = await FileIO.ReadTextAsync(file);
+                var manifest = JsonConvert.DeserializeObject<API.Thunderstore.ThunderstoreManifest>(text);
+                return manifest.VersionNumber == installedVersion;
+            } catch
+            {
+                return false;
+            }
+        }
         
 
         protected async override void OnNavigatedTo(NavigationEventArgs e)
@@ -60,9 +76,17 @@ namespace ROR2ModManager.Pages.Install
             foreach (var pkg in parameters.Packages)
             {
                 var path = Path.Combine(ApplicationData.Current.LocalFolder.Path, pkg.full_name);
-                if (!System.IO.Directory.Exists(path))
+                if (await CheckInstalledModVersion(pkg.full_name, pkg._selected_version))
                 {
-                    await ApplicationData.Current.LocalFolder.CreateFolderAsync(pkg.full_name);
+                    if (System.IO.Directory.Exists(path))
+                    {
+                        var fldr = await ApplicationData.Current.LocalFolder.CreateFolderAsync(pkg.full_name, CreationCollisionOption.OpenIfExists);
+                        await fldr.DeleteAsync();
+                    } else
+                    {
+                        await ApplicationData.Current.LocalFolder.CreateFolderAsync(pkg.full_name);
+                    }
+        
                     try { 
                         await Task.Run(async () => await InstallPackage(pkg.versions.Where((x) => x.version_number == pkg._selected_version).First().download_url, path));
                     } catch
@@ -107,6 +131,7 @@ namespace ROR2ModManager.Pages.Install
             SetProgressBarValue();
             if (downloadsDone == parameters.Packages.Count())
             {
+                Analytics.TrackEvent(AnalyticsEventNames.ProfileInstalled);
                 Task.Run(async () =>
                 {
                     await ProfileManager.AddNewProfile(parameters.ProfileName, parameters.Packages.ToArray());

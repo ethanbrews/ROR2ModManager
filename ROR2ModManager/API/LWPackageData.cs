@@ -9,7 +9,7 @@ namespace ROR2ModManager.API
     [Serializable]
     public class LWPackageData
     {
-        public string full_name;
+        public string full_name { get; set; }
         public string version;
     }
 }

@@ -1,7 +1,10 @@
-﻿using System;
+﻿using Microsoft.AppCenter.Analytics;
+using Microsoft.AppCenter.Crashes;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.ApplicationModel;
 using Windows.Foundation;
@@ -46,7 +49,13 @@ namespace ROR2ModManager.Pages.Settings
             if (RiskOfRainInstallationLocation == null)
                 RiskOfRainInstallationLocation = "Not Set";
 
-            ShowUpdateInNavBarCheckBox.IsChecked = ApplicationData.Current.LocalSettings.Values["showUpdateInNavBar"] as bool? ?? true;
+            //ShowUpdateInNavBarCheckBox.IsChecked = ApplicationSettings.ShowUpdateButtonInNavBar.Value;
+
+            AnalyticsToggleSwitch.IsOn = await Analytics.IsEnabledAsync();
+            CrashalyticsToggleSwitch.IsOn = await Crashes.IsEnabledAsync();
+
+            AutoUpdateEnabled.IsOn = ApplicationSettings.UpdateAppAutomatically.Value;
+            ModsMarqueeSwitch.IsOn = ApplicationSettings.UseMarqueeEffectForMods.Value;
 
             Package package = Package.Current;
             PackageId packageId = package.Id;
@@ -58,11 +67,16 @@ namespace ROR2ModManager.Pages.Settings
             //CurrentApplicationVersionHasAssociatedChangelog = (MainPage.Current.ChangelogManager.VersionHasAssociatedChangelog() ? Visibility.Visible : Visibility.Collapsed);
             CurrentApplicationVersionHasAssociatedChangelog = MainPage.Current.ChangelogManager.VersionHasAssociatedChangelog();
 
-            if (await MainPage.Current.VersionHelper.IsApplicationUpToDateAsync())
-                UpdateAppButton_Reinstall.Visibility = Visibility.Visible;
-            else
+            try
+            {
+                if (await MainPage.Current.VersionHelper.IsApplicationUpToDateAsync())
+                    UpdateAppButton_Reinstall.Visibility = Visibility.Visible;
+                else
+                    UpdateAppButton_Update.Visibility = Visibility.Visible;
+            } catch (WebException)
+            {
                 UpdateAppButton_Update.Visibility = Visibility.Visible;
-
+            }
 
             Color FromHex(int hex)
             {
@@ -154,6 +168,7 @@ namespace ROR2ModManager.Pages.Settings
 
         private async void UpdateAppButton_Click(object sender, RoutedEventArgs e)
         {
+            Analytics.TrackEvent(AnalyticsEventNames.AppUpdateTriggeredByUser, new Dictionary<string, string> { { "AppUpToDate", MainPage.Current.VersionHelper.IsApplicationUpToDateAsync().ToString() } }) ;
             await Launcher.LaunchUriAsync(new Uri("ms-appinstaller:?source=http://ror2modman.ethanbrews.me/RoR2ModMan.appinstaller"));
         }
 
@@ -199,7 +214,31 @@ namespace ROR2ModManager.Pages.Settings
 
         private void ShowUpdateInNavBarCheckBox_Click(object sender, RoutedEventArgs e)
         {
-            ApplicationData.Current.LocalSettings.Values["showUpdateInNavBar"] = ShowUpdateInNavBarCheckBox.IsChecked;
+            //ApplicationSettings.ShowUpdateButtonInNavBar.Value = ShowUpdateInNavBarCheckBox.IsChecked ?? true;
+        }
+
+        private void CrashalyticsToggleSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            Crashes.SetEnabledAsync(CrashalyticsToggleSwitch.IsOn);
+        }
+
+        private async void AnalyticsToggleSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            await Analytics.SetEnabledAsync(true);
+            await Analytics.SetEnabledAsync(AnalyticsToggleSwitch.IsOn);
+        }
+
+        private async void Button_IssueTracker_Click(object sender, RoutedEventArgs e) => await Launcher.LaunchUriAsync(new Uri("https://github.com/ethanbrews/RiskOfRain2ModManagerIssueTracker/issues"));
+        private async void Button_Website_Click(object sender, RoutedEventArgs e) => await Launcher.LaunchUriAsync(new Uri("https://ethanbrews.me/pages/ror2modman.html"));
+        private async void Button_PrivacyPolicy_Click(object sender, RoutedEventArgs e) => await Launcher.LaunchUriAsync(new Uri("https://ethanbrews.me/privacy/forecast-policy.html"));
+        private async void Button_TermsOfService_Click(object sender, RoutedEventArgs e) => await Launcher.LaunchUriAsync(new Uri("https://ethanbrews.me/terms-of-service.html"));
+
+        private void AutoUpdateEnabled_Toggled(object sender, RoutedEventArgs e) => ApplicationSettings.UpdateAppAutomatically.Value = AutoUpdateEnabled.IsOn;
+
+        private void ModsMarqueeSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            ApplicationSettings.UseMarqueeEffectForMods.Value = ModsMarqueeSwitch.IsOn;
+            Analytics.TrackEvent(AnalyticsEventNames.ToggledModsMarquee, new Dictionary<string, string> { { "isOn", ModsMarqueeSwitch.IsOn.ToString() } });
         }
     }
 }

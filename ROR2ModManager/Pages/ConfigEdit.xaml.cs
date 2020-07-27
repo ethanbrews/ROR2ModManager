@@ -3,23 +3,33 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using System.Collections.ObjectModel;
+using System.Reflection.Metadata.Ecma335;
 using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
+using UWPTools.Storage;
+using Microsoft.UI.Xaml.Controls;
+using Windows.System;
+using Microsoft.AppCenter.Crashes;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
 namespace ROR2ModManager.Pages
 {
+
+    public class ConfigData
+    {
+        public string Name { get; set; }
+        public ConfigParser Parser { get; set; }
+        public IEnumerable<string> SectionNames { get; set; }
+        public string ConfigPath { get; set; }
+    }
+
+    public class AllConfigItemsProfile : Profile { };
+
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
@@ -30,12 +40,23 @@ namespace ROR2ModManager.Pages
             this.InitializeComponent();
         }
 
+        ObservableCollection<ConfigData> ConfigItems;
+        ObservableCollection<Profile> Profiles;
+        List<ConfigData> AllConfigItems;
+
         private async Task<StorageFolder> GetConfigFolderAsync()
         {
             try
             {
-                //TODO: This crashes if [ror2] is not set
-                return await (await StorageFolder.GetFolderFromPathAsync(ApplicationData.Current.LocalSettings.Values["ror2"] as string)).GetFolderAsync(@"BepInEx\config");
+                var path = ApplicationData.Current.LocalSettings.Values["ror2"] as string;
+                if (path is null)
+                {
+                    await ProfileManager.ChooseRoRInstallFolder(true);
+                    path = ApplicationData.Current.LocalSettings.Values["ror2"] as string;
+                    if (path is null)
+                        return null;
+                }
+                return await (await StorageFolder.GetFolderFromPathAsync(path)).GetFolderAsync(@"BepInEx\config");
             }
             catch (FileNotFoundException)
             {
@@ -45,119 +66,177 @@ namespace ROR2ModManager.Pages
 
         private async void Page_Loading(FrameworkElement sender, object args)
         {
-
-            var ConfigFolder = await GetConfigFolderAsync();
-            if (ConfigFolder == null)
-                return;
-
-            foreach(var file in await ConfigFolder.GetFilesAsync())
+            var configFolder = await GetConfigFolderAsync();
+            if (configFolder is null)
             {
-                var root = new TreeViewNode { Content = file.DisplayName };
-                var config = new ConfigParser(file.Path);
-                foreach (var sec in config.Sections)
+                MainPage.Current.contentFrame.Navigate(typeof(Pages.Play));
+                return;
+            }
+
+            AllConfigItems = new List<ConfigData>();
+            foreach (var configFile in await configFolder.GetFilesAsync())
+            {
+                try
                 {
-                    var secItem = new TreeViewNode { Content = sec.SectionName };
-                    foreach (var item in sec.Keys )
+                    var parser = new ConfigParser(configFile.Path);
+                    AllConfigItems.Add(new ConfigData
                     {
-                        var contentSp = new StackPanel();
-                        var name = new TextBlock { Text = item.Name };
-                        var value = new TextBlock { Text = item.ValueRaw.ToString(), Style = this.Resources["CaptionTextBlockStyle"] as Style };
-                        contentSp.Children.Add(name);
-                        contentSp.Children.Add(value);
-
-                        var treeItem = new TreeViewNode
-                        {
-                            Content = $"{item.Name} = {item.ValueRaw.ToString()}"
-                        };
-                        secItem.Children.Add(treeItem);
-
-                        
-                       
-                    }
-                    root.Children.Add(secItem);
+                        Name = configFile.Name,
+                        SectionNames = from sec in parser.Sections select sec.SectionName,
+                        Parser = parser,
+                        ConfigPath = configFile.Path
+                    });
+                } catch (Exception ex)
+                {
+                    await new ContentDialog
+                    {
+                        Title = "Error",
+                        Content = $"An exception ({ex.GetType().FullName}) occurred when loading config.",
+                        IsSecondaryButtonEnabled = false,
+                        PrimaryButtonText = "Close"
+                    }.ShowAsync();
+                    Crashes.TrackError(ex);
+                    MainPage.Current.contentFrame.Navigate(typeof(Play));
+                    return;
                 }
-
-                CfgTree.RootNodes.Add(root);
-                
                 
             }
 
+            ConfigItems = new ObservableCollection<ConfigData>(AllConfigItems);
+
+            CfgTree.ItemsSource = ConfigItems;
+
+            Profiles = new ObservableCollection<Profile>((await ProfileManager.GetProfiles()).Where(x => x.Name != "Vanilla").ToList());
+            Profiles.Insert(0, new AllConfigItemsProfile { Name = "All", PacksLW = new API.LWPackageData[] { } });
+            ProfilesPivot.ItemsSource = Profiles;
+            ProfilesPivot.SelectionChanged += ProfilesPivot_SelectionChanged;
         }
 
-        private async void SetStringEditor(string file, string section, string name, string initialValue, Action<string> updateTreeAction)
+        private void FilterListForProfile(Profile profile)
         {
-            ValueSelector.Children.Clear();
-            ValueSelector.Children.Add(new TextBlock { Text = name });
+            List<ConfigData> TempFiltered = new List<ConfigData>();
 
-            var textBox = new TextBox { Text = initialValue, Width = 200 };
-            var ConfigFolder = await GetConfigFolderAsync();
-            if (ConfigFolder == null)
+            if (profile is null)
             {
-                ValueSelector.Children.Clear();
-                ValueSelector.Children.Add(new TextBlock { Text = "Config folder missing." });
-                return;
+                TempFiltered = AllConfigItems;
+            } else
+            {
+                foreach (var p in profile.PacksLW)
+                {
+                    var parts = p.full_name.Split('-', '_', '.');
+                    foreach (var part in parts)
+                    {
+                        var configs = AllConfigItems.Where(x => x.Name.Split('.').Contains(part)).ToList();
+                        TempFiltered.AddRange(configs);
+                    }
+                }
             }
-            var configPath = (await ConfigFolder.GetFileAsync(file)).Path;
 
-            textBox.KeyUp += async (object sender, KeyRoutedEventArgs e) =>
+
+            if (profile is AllConfigItemsProfile)
+                TempFiltered = AllConfigItems;
+
+            for (int i = ConfigItems.Count - 1; i >= 0; i--)
             {
-                var config = new ConfigParser(configPath);
-                config.Sections.Where(x => x.SectionName == section).First().Keys.Where(x => x.Name == name).First().ValueRaw = textBox.Text;
-                config.Save(configPath);
-                updateTreeAction($"{name} = {textBox.Text}");
-            };
-
-            ValueSelector.Children.Add(textBox);
-        }
-
-        private async void SetBoolEditor(string file, string section, string name, bool initialValue, Action<string> updateTreeAction)
-        {
-            ValueSelector.Children.Clear();
-            ValueSelector.Children.Add(new TextBlock { Text = name });
-
-            var toggleButton = new ToggleButton { Content = initialValue.ToString(), IsEnabled=initialValue };
-            var ConfigFolder = await GetConfigFolderAsync();
-            if (ConfigFolder == null)
-            {
-                ValueSelector.Children.Clear();
-                ValueSelector.Children.Add(new TextBlock { Text = "Config folder missing." });
-                return;
+                var item = ConfigItems[i];
+                if (!TempFiltered.Contains(item))
+                {
+                    ConfigItems.Remove(item);
+                }
             }
-            var configPath = (await ConfigFolder.GetFileAsync(file)).Path;
-            toggleButton.Tapped += async (object sender, TappedRoutedEventArgs e) =>
+
+            /* Next, add back any Person objects that are included in TempFiltered and may 
+            not currently be in PeopleFiltered (in case of a backspace) */
+
+            foreach (var item in TempFiltered)
             {
-                toggleButton.Content = toggleButton.IsChecked.ToString();
-                var config = new ConfigParser(configPath);
+                if (!ConfigItems.Contains(item))
+                {
+                    ConfigItems.Add(item);
+                }
+            }
 
-                var sect = config.Sections.Where(x => x.SectionName == section).First();
-                var item = sect.Keys.Where(x => x.Name == name).First();
-                item.ValueRaw = toggleButton.IsChecked;
-                var tempfile = await ApplicationData.Current.TemporaryFolder.CreateFileAsync(file, CreationCollisionOption.ReplaceExisting);
-                config.Save(tempfile.Path);
-                await tempfile.CopyAndReplaceAsync(await StorageFile.GetFileFromPathAsync(configPath));
-                updateTreeAction($"{name} = {toggleButton.IsChecked.ToString().ToLower()}");
-            };
-
-            ValueSelector.Children.Add(toggleButton);
         }
 
-        private void CfgTree_ItemInvoked(TreeView sender, TreeViewItemInvokedEventArgs args)
+        private bool IsBool(string v) => v == "true" || v == "false";
+        private bool IsInteger(string v)
         {
-            var item = (args.InvokedItem as TreeViewNode);
+            return false; // Number box causes crash right now
+            try { int.Parse(v); } catch { return false; }
+            return true;
+        }
 
-            if (item.HasChildren)
+        private void ProfilesPivot_SelectionChanged(object sender, SelectionChangedEventArgs e) => FilterListForProfile(e.AddedItems[0] as Profile);
+
+        private void CfgTree_ItemInvoked(object sender, SelectionChangedEventArgs e)
+        {
+
+            var configData = (sender as ListView).SelectedItem as ConfigData;
+            if (configData == null)
                 return;
 
-            var name = item.Content.ToString().Split(" = ")[0];
-            var value = item.Content.ToString().Split(" = ")[1];
-            var section = item.Parent.Content.ToString();
-            var file = item.Parent.Parent.Content.ToString();
+            EditorStackPanel.Children.Clear();
 
-            if (value == "true" || value == "false")
-                SetBoolEditor(file + ".cfg", section, name, (value == "true"), (string v) => item.Content = v);
-            else
-                SetStringEditor(file + ".cfg", section, name, value, (string v) => item.Content = v);
+            foreach(var sec in configData.Parser.Sections)
+            {
+                EditorStackPanel.Children.Add(new TextBlock { Text = sec.SectionName, Style = this.Resources["TitleTextBlockStyle"] as Style, Margin = new Thickness(0, 10, 0, 0) });
+                foreach (var item in sec.Keys)
+                {
+                    var containerStackPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 5, 0, 5) };
+                    containerStackPanel.Children.Add(new TextBlock { Text = item.Name, MinWidth = 300, VerticalAlignment = VerticalAlignment.Center });
+                    FrameworkElement inputElement;
 
+                    if (IsBool(item.Content))
+                    {
+                        /*
+                        inputElement = new ToggleButton { Content = item.Content, IsChecked = item.Content == "true", MinWidth = 300 };
+                        (inputElement as ToggleButton).Checked += async (object _1, RoutedEventArgs _2) =>
+                        {
+                            await WriteConfiguration((inputElement as ToggleButton).IsChecked.ToString().ToLower(), sec.SectionName, item.Name, configData.ConfigPath, configData.Parser);
+                            (inputElement as ToggleButton).Content = (_1 as ToggleButton).IsChecked.ToString().ToLower();
+                        };*/
+                        inputElement = new ToggleSwitch { IsOn = item.Content == "true", OnContent = "true", OffContent = "false", MinWidth = 300 };
+                        (inputElement as ToggleSwitch).Toggled += async (object _1, RoutedEventArgs _2) =>
+                        {
+                            await WriteConfiguration((inputElement as ToggleSwitch).IsOn.ToString().ToLower(), sec.SectionName, item.Name, configData.ConfigPath, configData.Parser);
+                        };
+                    } else if (IsInteger(item.Content))
+                    {
+                        inputElement = new Microsoft.UI.Xaml.Controls.NumberBox { Value = int.Parse(item.Content)};
+                        (inputElement as NumberBox).ValueChanged += async (NumberBox _1, NumberBoxValueChangedEventArgs _2) =>
+                        {
+                            await WriteConfiguration((inputElement as NumberBox).Value.ToString(), sec.SectionName, item.Name, configData.ConfigPath, configData.Parser);
+                        };
+                    } else
+                    {
+                        inputElement = new TextBox { Width = 200, Text = item.Content, MinWidth = 300 };
+                        (inputElement as TextBox).TextChanged += async (object _1, TextChangedEventArgs _2) =>
+                        {
+                            await WriteConfiguration((inputElement as TextBox).Text, sec.SectionName, item.Name, configData.ConfigPath, configData.Parser);
+                        };
+                    }
+
+                    containerStackPanel.Children.Add(inputElement);
+                    try { EditorStackPanel.Children.Add(containerStackPanel); } catch { System.Diagnostics.Debug.WriteLine(item.Name); }
+                    
+                }
+            }
+        }
+
+        private async Task WriteConfiguration(string Value, string sectionName, string keyName, string path, ConfigParser parser)
+        {
+            parser.SetValue(sectionName, keyName, Value);
+            var tempFile = await ApplicationData.Current.TemporaryFolder.CreateFileAsync(Guid.NewGuid().ToString() + ".cfg", CreationCollisionOption.ReplaceExisting);
+            var newFile = await StorageFile.GetFileFromPathAsync(path);
+            parser.Save(tempFile.Path);
+            await tempFile.CopyAndReplaceAsync(newFile);
+            _ = tempFile.DeleteAsync();
+            
+        }
+
+        private async void Button_OpenConfig_Click(object sender, RoutedEventArgs e)
+        {
+            await Launcher.LaunchFolderAsync(await GetConfigFolderAsync());
         }
     }
 }
