@@ -17,6 +17,7 @@ using Newtonsoft.Json;
 using Windows.Storage;
 using System.Runtime.Serialization.Formatters.Binary;
 using Windows.System;
+using Windows.UI.Xaml.Media.Animation;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -34,7 +35,7 @@ namespace ROR2ModManager.Pages
     public sealed partial class Play : Page
     {
 
-        //public ObservableCollection<Profile> Profiles = new ObservableCollection<Profile>();
+        public ObservableCollection<Profile> Profiles = new ObservableCollection<Profile>();
 
         public Play()
         {
@@ -49,88 +50,20 @@ namespace ROR2ModManager.Pages
                 await args.contentDialogToShow.ShowAsync();
 
             await ProfileManager.LoadProfilesFromFile();
-            foreach (var p in await ProfileManager.GetProfiles())
+            foreach(var profile in await ProfileManager.GetProfiles())
             {
-                var content = new StackPanel
-                {
-                    Height = 90,
-                    Margin = new Thickness(8),
-                    Tag = p.Name,
-                    Padding = new Thickness(10, 5, 5, 5),
-                    BorderThickness = new Thickness(3),
-                    BorderBrush = this.Resources["SystemControlBackgroundListMediumRevealBorderBrush"] as Brush
-                };
-                var buttons = new StackPanel { Orientation = Orientation.Horizontal };
-                content.Children.Add(new TextBlock { Text = p.Name, Style = this.Resources["TitleTextBlockStyle"] as Style, Margin = new Thickness(0, 0, 0, 4) });
-                
-                // Buttons
-                
-                var playbtn = new Button
-                {
-                    Content = "Play with this Profile",
-                    Style = this.Resources["AccentButtonStyle"] as Style
-                };
-                playbtn.Click += this.Button_Play_Click;
-
-                var checkUpdateBtn = new Button
-                {
-                    Content = "Update all mods",
-                    Margin = new Thickness(0, 5, 0, 0)
-                };
-                checkUpdateBtn.Click += CheckUpdateBtn_Click;
-
-                var exportBtn = new Button { Content = "Share this Profile" };
-                exportBtn.Click += ExportBtn_Click;
-
-                var deleteBtn = new Button { Content = "Delete this profile", Margin = new Thickness(0, 5, 0, 0) };
-                deleteBtn.Click += DeleteBtn_Click;
-
-                // Add buttons to parents
-
-                var flyoutStackPanel = new StackPanel();
-                var flyout = new Flyout();
-                flyout.Content = flyoutStackPanel;
-
-                var triggerFlyoutButton = new Button
-                {
-                    Content = "More...",
-                    Margin = new Thickness(10, 0, 0, 0)
-                };
-                triggerFlyoutButton.Click += (object sender, RoutedEventArgs args1) =>
-                {
-                    content.ContextFlyout.ShowAt(content);
-                };
-
-
-                buttons.Children.Add(playbtn);
-                if (p.Name != "Vanilla") { 
-                    buttons.Children.Add(triggerFlyoutButton);
-                    content.ContextFlyout = flyout;
-                } else
-                {
-                    content.Children.Add(new TextBlock { Text = "When playing on Vanilla, BepInEx is disabled and prismatic trials are available", Margin = new Thickness(0, 0, 0, 4)});
-                    content.Height += 20;
-                }
-                content.Children.Add(buttons);
-
-
-                flyoutStackPanel.Children.Add(exportBtn);
-                flyoutStackPanel.Children.Add(checkUpdateBtn);
-                flyoutStackPanel.Children.Add(deleteBtn);
-
-                content.DataContext = p;
-                
-                MainStackPanel.Children.Add(content);
+                profile._IsVanilla = profile.Name == "Vanilla";
+                Profiles.Add(profile);
+                System.Diagnostics.Debug.WriteLine($"Displaying profile: {profile.Name}");
             }
-
-            //System.Diagnostics.Debug.WriteLine($"Loaded {this.Profiles.Count()} profiles");
+            PacksGridView.ItemsSource = Profiles;
         }
 
         private async void DeleteBtn_Click(object sender, RoutedEventArgs e)
         {
             var p = (sender as Button).DataContext as Profile;
             await ProfileManager.DeleteProfile(p);
-            MainStackPanel.Children.Remove(MainStackPanel.Children.Where(x => (x as FrameworkElement).Tag as string == p.Name as string).First());
+            //MainStackPanel.Children.Remove(MainStackPanel.Children.Where(x => (x as FrameworkElement).Tag as string == p.Name as string).First());
         }
 
         private async void ExportBtn_Click(object sender, RoutedEventArgs e)
@@ -160,8 +93,8 @@ namespace ROR2ModManager.Pages
 
         private void CheckUpdateBtn_Click(object sender, RoutedEventArgs e)
         {
-            var packslw = ((sender as Button).DataContext as Profile).PacksLW;
-            MainPage.Current.contentFrame.Navigate(typeof(Install.Select), new Install.SelectParameters { packagesLW = packslw });
+            var ctxt = ((sender as Button).DataContext as Profile);
+            MainPage.Current.contentFrame.Navigate(typeof(Install.Select), new Install.SelectParameters { packagesLW = ctxt.PacksLW, DefaultName = ctxt.Name });
         }
 
         private async void Button_Play_Click(object sender, RoutedEventArgs e)
@@ -172,9 +105,38 @@ namespace ROR2ModManager.Pages
             button.IsEnabled = true;
         }
 
-        private async void Button_Update_Click(object sender, RoutedEventArgs e)
+        private void StackPanel_Loaded(object sender, RoutedEventArgs e)
         {
-            
+            ((sender as FrameworkElement).FindName("slide") as Storyboard).Begin();
+        }
+
+        private void MarqueeStackPanelContainer_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (!ApplicationSettings.UseMarqueeEffectForMods.Value)
+            {
+                (sender as FrameworkElement).Visibility = Visibility.Collapsed;
+                return;
+            }
+            (sender as FrameworkElement).Visibility = Visibility.Visible;
+
+            var width = ((sender as FrameworkElement).FindName("ModsList") as FrameworkElement).ActualWidth;
+            var displayWidth = (sender as StackPanel).ActualWidth - ((sender as StackPanel).Padding.Left + (sender as StackPanel).Padding.Right);
+            var storyboard = ((sender as FrameworkElement).FindName("MarqueeStoryBoard") as Storyboard);
+            var control = ((sender as FrameworkElement).FindName("ModsList") as ItemsControl);
+            var animation = new DoubleAnimation();
+            animation.From = displayWidth;
+            animation.To = -width;
+            animation.Duration = new Duration(TimeSpan.FromSeconds(width / 50));
+            animation.RepeatBehavior = RepeatBehavior.Forever;
+
+
+
+            Storyboard.SetTarget(storyboard, control);
+            Storyboard.SetTargetProperty(storyboard, "(Canvas.Left)");
+
+            storyboard.Children.Add(animation);
+            if (control.ActualWidth > displayWidth)
+                storyboard.Begin();
         }
     }
 }

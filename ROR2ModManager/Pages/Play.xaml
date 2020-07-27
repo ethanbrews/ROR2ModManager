@@ -6,13 +6,82 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
+    xmlns:root="using:ROR2ModManager"
+    xmlns:converters="using:ROR2ModManager.Converters"
     xmlns:api="using:ROR2ModManager.API"
     mc:Ignorable="d"
     Background="{ThemeResource RegionBrush}">
 
-    <ScrollViewer x:Name="MainScrollView">
-        <StackPanel x:Name="MainStackPanel">
-            
-        </StackPanel>
-    </ScrollViewer>
+    <Page.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+        <converters:NegatingConverter x:Key="NegatingConverter" />
+        <converters:WidthToTimeConverter x:Key="WidthToTimeConverter" />
+    </Page.Resources>
+
+    <GridView x:Name="PacksGridView"
+              IsItemClickEnabled="False"
+              Padding="20">
+        <GridView.ItemTemplate>
+            <DataTemplate x:DataType="root:Profile">
+                <StackPanel Width="473" Padding="10" BorderBrush="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" BorderThickness="3">
+                    <TextBlock Text="{Binding Name}" Style="{StaticResource TitleTextBlockStyle}" Margin="1 0 0 10" />
+
+                    <StackPanel x:Name="MarqueeStackPanelContainer" Loaded="MarqueeStackPanelContainer_Loaded">
+                        <StackPanel.Resources>
+                            <Storyboard x:Name="MarqueeStoryBoard">
+                                <!--<DoubleAnimation x:Name="MarqueeStoryBoardDoubleAnimation"
+                                                 Duration="0:0:16"
+                                                 RepeatBehavior="Forever" 
+                                                 From="470"
+                                                 To="{Binding ElementName=ModsList, Path=ActualWidth, Converter={StaticResource NegatingConverter}}"
+                                                 Storyboard.TargetName="ModsList"
+                                                 Storyboard.TargetProperty="(Canvas.Left)" />-->
+                            </Storyboard>
+                        </StackPanel.Resources>
+                        <Canvas Height="32">
+                            <Canvas.Clip>
+                                <RectangleGeometry Rect="0, 0, 447, 32" />
+                            </Canvas.Clip>
+                            <ItemsControl ItemsSource="{Binding PacksLW}" x:Name="ModsList">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" x:Name="ModsListInner" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="5 0 0 0" Height="28" CornerRadius="5" Background="{ThemeResource SystemControlAcrylicElementBrush}">
+                                            <TextBlock Padding="5" Text="{Binding Path=full_name}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Canvas>
+                    </StackPanel>
+
+
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Play with this Profile" Style="{ThemeResource AccentButtonStyle}" Click="Button_Play_Click" />
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding _IsVanilla, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                            <Button Content="Update Mods" Margin="5 0 0 0" Click="CheckUpdateBtn_Click" />
+                            <Button Content="Share Profile" Margin="5 0 0 0" Click="ExportBtn_Click" />
+                            <Button Content="Delete Pack" Margin="5 0 0 0">
+                                <Button.Flyout>
+                                    <Flyout>
+                                        <StackPanel>
+                                            <TextBlock Style="{ThemeResource BaseTextBlockStyle}" Text="Delete this pack?" Margin="0,0,0,12" />
+                                            <Button Click="DeleteBtn_Click" Content="Yes, Delete" />
+                                        </StackPanel>
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
+                        
+                    </StackPanel>
+                </StackPanel>
+            </DataTemplate>
+        </GridView.ItemTemplate>
+    </GridView>
 </Page>

@@ -5,7 +5,13 @@
     xmlns:local="using:ROR2ModManager">
 
     <Application.Resources>
-        <ResourceDictionary Source="Themes\AppDefault.xaml" />
+        
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes\AppDefault.xaml" />
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
     </Application.Resources>
 
 </Application>

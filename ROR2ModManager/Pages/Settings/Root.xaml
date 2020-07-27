@@ -15,79 +15,109 @@
         <uwpToolsConverters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Page.Resources>
 
-    <StackPanel Padding="20,20,20,0">
-        <TextBlock Text="Info" Style="{StaticResource TitleTextBlockStyle}" />
-        <TextBlock Text="App Package Version: "><Run Text="{x:Bind ApplicationVersion}" /></TextBlock>
-        <TextBlock Margin="0, 0, 0, 7" Text="App Package Family: "><Run Text="{x:Bind ApplicationPackageIdFamily}" /></TextBlock>
-        <CheckBox Content="Show a button in the Navigation bar when an update is available" x:Name="ShowUpdateInNavBarCheckBox" Click="ShowUpdateInNavBarCheckBox_Click" />
-        <StackPanel Margin="0 10 0 0" Orientation="Horizontal">
-            <Button x:Name="UpdateAppButton_Reinstall" Visibility="Collapsed" Content="Re-install App" Click="UpdateAppButton_Click"/>
-            <Button x:Name="UpdateAppButton_Update" Visibility="Collapsed" Content="Update App" Click="UpdateAppButton_Click"/>
-            <Button Visibility="{x:Bind Path=CurrentApplicationVersionHasAssociatedChangelog, Converter=
-                {StaticResource BoolToVisibilityConverter}}" Content="View Latest Changelog" Margin="10 0 0 0" Click="ChangelogButton_Click" />
-        </StackPanel>
-        
-        <TextBlock Text="Install Settings" Style="{StaticResource TitleTextBlockStyle}" Margin="0, 25, 0, 0" />
-        <TextBlock Text="Risk of rain 2 Install Location: "><Run Text="{x:Bind RiskOfRainInstallationLocation}" /></TextBlock>
-        <StackPanel Orientation="Horizontal" Margin="0, 5, 0, 0">
-            <Button Content="Open Risk of Rain Folder" Click="Open_RoR_Button_Click" />
-            <Button Content="Change Install Location" Click="Change_RoR_Button_Click" Margin="10, 0, 0, 0"/>
-        </StackPanel>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Padding="20,20,20,20">
+            <StackPanel Background="{ThemeResource SystemControlAltLowAcrylicWindowBrush}" Padding="20" CornerRadius="10">
+                <TextBlock Text="Info" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock Text="App Package Version: "><Run Text="{x:Bind ApplicationVersion}" /></TextBlock>
+                <TextBlock Margin="0, 0, 0, 7" Text="App Package Family: "><Run Text="{x:Bind ApplicationPackageIdFamily}" /></TextBlock>
+                <TextBlock Margin="0, 0, 0, 7" Text="By using this app, you agree to the Privacy Policy and Terms of Service." />
+                <StackPanel Margin="0 10 0 0" Orientation="Horizontal">
+                    <Button x:Name="UpdateAppButton_Reinstall" Visibility="Collapsed" Content="Re-install App" Click="UpdateAppButton_Click"/>
+                    <Button x:Name="UpdateAppButton_Update" Visibility="Collapsed" Content="Update App" Click="UpdateAppButton_Click"/>
+                    <Button Visibility="{x:Bind Path=CurrentApplicationVersionHasAssociatedChangelog, Converter=
+                    {StaticResource BoolToVisibilityConverter}}" Content="View Latest Changelog" Margin="10 0 0 0" Click="ChangelogButton_Click" />
+                    <Button Margin="10 0 0 0" Content="Issue Tracker" Click="Button_IssueTracker_Click" />
+                    <Button Margin="10 0 0 0" Content="App Website" Click="Button_Website_Click" />
+                    <Button Margin="10 0 0 0" Content="Terms and Privacy Policy">
+                        <Button.Flyout>
+                            <Flyout>
+                                <StackPanel>
+                                    <Button Click="Button_PrivacyPolicy_Click" Width="140" Content="Privacy Policy" />
+                                    <Button Click="Button_TermsOfService_Click" Width="140" Margin="0 5 0 0" Content="Terms of Service" />
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
 
-        <TextBlock Text="Application Install Location: " Margin="0, 15, 0, 0"><Run Text="{x:Bind ApplicationInstallLocation}" /></TextBlock>
-        <Button Content="Open Application Folder" Click="Open_App_Button_Click" Margin="0, 5, 0, 0"/>
-        <TextBlock Margin="0, 3, 0, 0" Text="Windows doesn't allow UWP apps to be installed to a different location" Style="{StaticResource CaptionTextBlockStyle}" />
-
-        <TextBlock Text="Application Theme" Style="{StaticResource TitleTextBlockStyle}" Margin="0, 25, 0, 0" />
-        <StackPanel Orientation="Horizontal" Margin="0 10 0 0" x:Name="Themesp">
-            <StackPanel PointerExited="ThemeButton_PointerExited" PointerEntered="ThemeButton_PointerEntered" Tapped="ThemeButton_Tapped" Background="{ThemeResource RegionBrush}" x:Name="DefaultLightThemeButton" Width="80" Height="100" BorderThickness="3" BorderBrush="{ThemeResource SystemControlBackgroundListMediumRevealBorderBrush}" Padding="10,0,10,0" Margin="10,0,0,0">
-                <TextBlock FontSize="24" FontWeight="Bold" Text="Aa" />
-                <Rectangle Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
-                <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemAccentColor}" HorizontalAlignment="Left" />
-                <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
-                <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
+                    </Button>
+                </StackPanel>
             </StackPanel>
-            <StackPanel PointerExited="ThemeButton_PointerExited" PointerEntered="ThemeButton_PointerEntered" Tapped="ThemeButton_Tapped" Background="{ThemeResource RegionBrush}" x:Name="DefaultDarkThemeButton" Width="80" Height="100" BorderThickness="3" BorderBrush="{ThemeResource SystemControlBackgroundListMediumRevealBorderBrush}" Padding="10,0,10,0" Margin="10,0,0,0">
-                <TextBlock FontSize="24" FontWeight="Bold" Text="Aa" />
-                <Rectangle Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
-                <!--<Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemAccentColor}" HorizontalAlignment="Left" />-->
-                <Polygon Margin="0 5 0 0" Points="0,0, 100,0, 50,10, 0,10" Fill="{ThemeResource SystemAccentColor}" />
-                <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
-                <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
+            
+            <StackPanel Margin="0 20 0 0" Background="{ThemeResource SystemControlAltLowAcrylicWindowBrush}" Padding="20" CornerRadius="10">
+                <TextBlock Text="General" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock Margin="0 3 0 0" Text="Mods are shown in the play page with a marquee effect, this can be disabled here." Style="{StaticResource BodyTextBlockStyle}" />
+                <ToggleSwitch Margin="0 3 0 0" x:Name="ModsMarqueeSwitch" OffContent="Mods List Disabled" OnContent="Mods List Enabled" Toggled="ModsMarqueeSwitch_Toggled" />
             </StackPanel>
-            <!--<Canvas Width="80" Height="100">
-                <Polygon Points="0,0, 80,0, 0,100" Fill="Aqua" Canvas.Top="0" Canvas.Left="0" />
-                <Polygon Points="80,0, 0,100, 80,100" Fill="Red" Canvas.Top="0" Canvas.Left="0" />
-                <TextBlock FontSize="24" FontWeight="Bold" Text="Aa" Canvas.Left="10" Canvas.Top="2" />
-                <Polygon Points="0,0, 60,0, 60,10, 0,10" Fill="Orange" Canvas.Left="10" Canvas.Top="35" />
-                <Polygon Points="42,0, 60,0, 60,10, 34,10" Fill="Purple" Canvas.Left="10" Canvas.Top="35" />
-                
-                <Polygon Points="0,0, 60,0, 60,10, 0,10" Fill="Orange" Canvas.Left="10" Canvas.Top="50" />
-                <Polygon Points="30,0, 60,0, 60,10, 22,10" Fill="Purple" Canvas.Left="10" Canvas.Top="50" />
-                
-                <Polygon Points="0,0, 60,0, 60,10, 0,10" Fill="Orange" Canvas.Left="10" Canvas.Top="65" />
-                <Polygon Points="18,0, 60,0, 60,10, 10,10" Fill="Purple" Canvas.Left="10" Canvas.Top="65" />
-                
-                <Polygon Points="0,0, 60,0, 60,10, 0,10" Fill="Purple" Canvas.Left="10" Canvas.Top="80" />
-                <Polygon Points="0,0, 6,0, 0,8" Fill="Orange" Canvas.Left="10" Canvas.Top="80" />
 
-            </Canvas>-->
-            <!--<StackPanel PointerExited="ThemeButton_PointerExited" PointerEntered="ThemeButton_PointerEntered" Tapped="ThemeButton_Tapped" Background="{ThemeResource RegionBrush}" x:Name="WindowsLightThemeButton" Width="80" Height="100" BorderThickness="3" BorderBrush="{ThemeResource SystemControlBackgroundListMediumRevealBorderBrush}" Padding="10,0,10,0" Margin="10,0,0,0">
-                <TextBlock FontSize="24" FontWeight="Bold" Text="Aa" />
-                <Rectangle Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
-                <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemAccentColor}" HorizontalAlignment="Left" />
-                <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
-                <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
+            <StackPanel Margin="0 20 0 0" Background="{ThemeResource SystemControlAltLowAcrylicWindowBrush}" Padding="20" CornerRadius="10">
+                <TextBlock Text="Install Settings" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock Text="Risk of rain 2 Install Location: "><Run Text="{x:Bind RiskOfRainInstallationLocation}" /></TextBlock>
+                <StackPanel Orientation="Horizontal" Margin="0, 5, 0, 0">
+                    <Button Content="Open Risk of Rain Folder" Click="Open_RoR_Button_Click" />
+                    <Button Content="Change Install Location" Click="Change_RoR_Button_Click" Margin="10, 0, 0, 0"/>
+                </StackPanel>
+            
+            <TextBlock Text="Application Install Location: " Margin="0, 15, 0, 0"><Run Text="{x:Bind ApplicationInstallLocation}" /></TextBlock>
+            <Button Content="Open Application Folder" Click="Open_App_Button_Click" Margin="0, 5, 0, 0"/>
+            <TextBlock Margin="0, 3, 0, 0" Text="Windows doesn't allow UWP apps to be installed to a different location" Style="{StaticResource CaptionTextBlockStyle}" />
             </StackPanel>
-            <StackPanel PointerExited="ThemeButton_PointerExited" PointerEntered="ThemeButton_PointerEntered" Tapped="ThemeButton_Tapped" Background="{ThemeResource RegionBrush}" x:Name="WindowsDarkThemeButton" Width="80" Height="100" BorderThickness="3" BorderBrush="{ThemeResource SystemControlBackgroundListMediumRevealBorderBrush}" Padding="10,0,10,0" Margin="10,0,0,0">
-                <TextBlock FontSize="24" FontWeight="Bold" Text="Aa" />
-                <Rectangle Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
-                <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemAccentColor}" HorizontalAlignment="Left" />
-                <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
-                <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
-            </StackPanel>-->
+
+            <StackPanel Margin="0 20 0 0" Background="{ThemeResource SystemControlAltLowAcrylicWindowBrush}" Padding="20" CornerRadius="10">
+                <TextBlock Text="Auto Update" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock Margin="0 3 0 0" Text="The app will automatically update if this is enabled." Style="{StaticResource BodyTextBlockStyle}" />
+                <TextBlock Text="If this is disabled, an update icon will be displayed in the navigation bar which will install the update in the background." Style="{StaticResource BodyTextBlockStyle}" />
+                <TextBlock Text="Automatic app updates will only happen when the app is not in use and all data is saved." Style="{StaticResource BodyTextBlockStyle}" />
+                <ToggleSwitch x:Name="AutoUpdateEnabled" OnContent="Enabled" OffContent="Disabled" Toggled="AutoUpdateEnabled_Toggled" />
+            </StackPanel>
+
+            <StackPanel Margin="0 20 0 0" Background="{ThemeResource SystemControlAltLowAcrylicWindowBrush}" Padding="20" CornerRadius="10">
+                <TextBlock Text="App Analytics" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock Margin="0 3 0 0" Text="Crash reporting and app analytics are used to inform development decisions and fix issues that cause the app to crash." Style="{StaticResource BodyTextBlockStyle}" />
+                <TextBlock Text="This information is anonymised and cannot be linked to you. More details can be found in the privacy policy." Style="{StaticResource BodyTextBlockStyle}" />
+                <ToggleSwitch Margin="0 3 0 0" x:Name="AnalyticsToggleSwitch" OffContent="App Analytics Disabled" OnContent="App Analytics Enabled" Toggled="AnalyticsToggleSwitch_Toggled" />
+                <ToggleSwitch x:Name="CrashalyticsToggleSwitch" OffContent="Crash Reporting Disabled" OnContent="Crash Reporting Enabled" Toggled="CrashalyticsToggleSwitch_Toggled" />
+            </StackPanel>
+
+            <StackPanel Margin="0 20 0 0" Background="{ThemeResource SystemControlAltLowAcrylicWindowBrush}" Padding="20" CornerRadius="10">
+                <TextBlock Text="Application Theme" Style="{StaticResource TitleTextBlockStyle}" />
+                <StackPanel Orientation="Horizontal" Margin="0 10 0 0" x:Name="Themesp">
+                    <StackPanel PointerExited="ThemeButton_PointerExited" PointerEntered="ThemeButton_PointerEntered" Tapped="ThemeButton_Tapped" Background="{ThemeResource RegionBrush}" x:Name="DefaultLightThemeButton" Width="80" Height="100" BorderThickness="3" BorderBrush="{ThemeResource SystemControlBackgroundListMediumRevealBorderBrush}" Padding="10,0,10,0" Margin="10,0,0,0">
+                        <TextBlock FontSize="24" FontWeight="Bold" Text="Aa" />
+                        <Rectangle Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
+                        <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemAccentColor}" HorizontalAlignment="Left" />
+                        <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
+                        <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
+                    </StackPanel>
+                    <StackPanel PointerExited="ThemeButton_PointerExited" PointerEntered="ThemeButton_PointerEntered" Tapped="ThemeButton_Tapped" Background="{ThemeResource RegionBrush}" x:Name="DefaultDarkThemeButton" Width="80" Height="100" BorderThickness="3" BorderBrush="{ThemeResource SystemControlBackgroundListMediumRevealBorderBrush}" Padding="10,0,10,0" Margin="10,0,0,0">
+                        <TextBlock FontSize="24" FontWeight="Bold" Text="Aa" />
+                        <Rectangle Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
+                        <!--<Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemAccentColor}" HorizontalAlignment="Left" />-->
+                        <Polygon Margin="0 5 0 0" Points="0,0, 100,0, 50,10, 0,10" Fill="{ThemeResource SystemAccentColor}" />
+                        <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
+                        <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
+                    </StackPanel>
+                    <!--<StackPanel Width="80" Height="100" PointerExited="ThemeButton_PointerExited" PointerEntered="ThemeButton_PointerEntered" BorderBrush="{ThemeResource SystemControlBackgroundListMediumRevealBorderBrush}" BorderThickness="3">
+                    <Canvas Width="74" Height="94" x:Name="MyCanvas">
+                        <Polygon Points="0,0, 74,0, 0,94" Fill="Aqua" Canvas.Top="0" Canvas.Left="0" />
+                        <Polygon Points="74,0, 0,94, 74,94" Fill="Red" Canvas.Top="0" Canvas.Left="0" />
+                        <TextBlock FontSize="24" FontWeight="Bold" Text="Aa" Canvas.Left="10" Canvas.Top="2" />
+                        <Polygon Points="0,0, 60,0, 60,10, 0,10" Fill="Orange" Canvas.Left="10" Canvas.Top="32" />
+                        <Polygon Points="42,0, 60,0, 60,10, 34,10" Fill="Purple" Canvas.Left="10" Canvas.Top="35" />
+
+                        <Polygon Points="0,0, 60,0, 60,10, 0,10" Fill="Orange" Canvas.Left="10" Canvas.Top="50" />
+                        <Polygon Points="30,0, 60,0, 60,10, 22,10" Fill="Purple" Canvas.Left="10" Canvas.Top="50" />
+
+                        <Polygon Points="0,0, 60,0, 60,10, 0,10" Fill="Orange" Canvas.Left="10" Canvas.Top="65" />
+                        <Polygon Points="18,0, 60,0, 60,10, 10,10" Fill="Purple" Canvas.Left="10" Canvas.Top="65" />
+
+                        <Polygon Points="0,0, 60,0, 60,10, 0,10" Fill="Purple" Canvas.Left="10" Canvas.Top="80" />
+                        <Polygon Points="0,0, 6,0, 0,8" Fill="Orange" Canvas.Left="10" Canvas.Top="80" />
+
+                    </Canvas>
+                </StackPanel>-->
+                </StackPanel>
+            </StackPanel>
+
         </StackPanel>
-
-
-    </StackPanel>
+    </ScrollViewer>
 </Page>

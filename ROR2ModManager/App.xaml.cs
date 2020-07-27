@@ -7,15 +7,16 @@ using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Windows.Storage;
 using MetroLog;
 using MetroLog.Targets;
+using ROR2ModManager;
 using Windows.ApplicationModel.Core;
 using Windows.UI.ViewManagement;
 using Windows.UI;
 using System.Collections.Generic;
+using Microsoft.AppCenter;
+using Microsoft.AppCenter.Analytics;
+using Microsoft.AppCenter.Crashes;
 
 namespace ROR2ModManager
 {
@@ -35,6 +36,14 @@ namespace ROR2ModManager
         {
             this.InitializeComponent();
             this.Suspending += OnSuspending;
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine("Running a Debug build, AppCenter will not register for Analytics and Crashes");
+            System.Diagnostics.Debug.WriteLine(Secrets.AnalyticsSecret);
+#else
+            AppCenter.Start(Secrets.AnalyticsSecret,
+                   typeof(Analytics), typeof(Crashes));
+#endif
+
         }
 
         protected override async void OnFileActivated(FileActivatedEventArgs args)
@@ -51,7 +60,8 @@ namespace ROR2ModManager
                 using (var fs = await (file as StorageFile).OpenStreamForReadAsync())
                 {
                     var profile = formatter.Deserialize(fs) as Profile;
-                    MainPage.Current.contentFrame.Navigate(typeof(Pages.Install.Select), new Pages.Install.SelectParameters { packagesLW = profile.PacksLW });
+                    MainPage.Current.contentFrame.Navigate(typeof(Pages.Install.Select), new Pages.Install.SelectParameters { packagesLW = profile.PacksLW, DefaultName = profile.Name });
+                    Analytics.TrackEvent(AnalyticsEventNames.ProfileImported);
                 }
             }
             catch
@@ -62,28 +72,6 @@ namespace ROR2ModManager
             
         }
 
-        private static void RegisterLogger()
-        {
-            LogManagerFactory.DefaultConfiguration.AddTarget(MetroLog.LogLevel.Trace, MetroLog.LogLevel.Fatal, new StreamingFileTarget());
-            /*
-            // Create IOC container and add logging feature to it.
-            IServiceCollection services = new ServiceCollection();
-            services.AddSingleton(typeof(ILogger<>), typeof(Logger<>));
-            services.AddLogging();
-
-            // Build provider to access the logging service.
-            IServiceProvider provider = services.BuildServiceProvider();
-
-            // UWP is very restrictive of where you can save files on the disk.
-            // The preferred place to do that is app's local folder.
-            StorageFolder folder = ApplicationData.Current.LocalFolder;
-            string fullPath = $"{folder.Path}\\Logs\\App.log";
-
-            // Tell the logging service to use Serilog.File extension.
-            provider.GetService<ILoggerFactory>().AddFile(fullPath);
-            */
-        }
-
         /// <summary>
         /// Invoked when the application is launched normally by the end user.  Other entry points
         /// will be used such as when the application is launched to open a specific file.
@@ -91,7 +79,6 @@ namespace ROR2ModManager
         /// <param Name="e">Details about the launch request and process.</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
-            RegisterLogger();
             Frame rootFrame = Window.Current.Content as Frame;
 
             // Do not repeat app initialization when the Window already has content,

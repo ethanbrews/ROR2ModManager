@@ -1,0 +1,27 @@
+﻿<Page
+    x:Class="ROR2ModManager.Changelogs._1_0_7_0"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ROR2ModManager.Changelogs"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource RegionBrush}">
+
+    <StackPanel>
+        <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="Auto Updates" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Auto update now more reliably updates the app" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Automatic updates can be disabled in settings" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• The update button will now install the app with one click" />
+
+        <TextBlock Style="{StaticResource TitleTextBlockStyle}" Margin="0 15 0 0" Text="Config Editor" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• There's now a config editor in the app!" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• The config files can be filtered to show only the mods in a specific profile however the changes made will affect all profiles." />
+
+        <TextBlock Style="{StaticResource TitleTextBlockStyle}" Margin="0 15 0 0" Text="Miscellaneous" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Modified app themes" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Changed layout rules so that more areas will be scrollable if the content is too large" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Bug fixes" />
+        <TextBlock Margin="0 15 0 0" Style="{StaticResource BodyTextBlockStyle}" Text="Any feedback or issues can be reported on the "><Hyperlink NavigateUri="https://github.com/ethanbrews/RiskOfRain2ModManagerIssueTracker/issues">GitHub issue tracker</Hyperlink>.</TextBlock>
+    </StackPanel>
+</Page>

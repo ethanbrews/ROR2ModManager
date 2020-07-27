@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:ROR2ModManager"
+    xmlns:mscontrols="using:Microsoft.UI.Xaml.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
@@ -22,7 +23,7 @@
             <NavigationView.MenuItems>
                 <NavigationViewItem Icon="Play" Content="Play Game" Tag="Play" />
                 <NavigationViewItem Icon="Download" Content="Create Profile" Tag="Install" />
-                <!--<NavigationViewItem Icon="Edit" Content="Edit Mod Configuration" Tag="Config" />-->
+                <NavigationViewItem Icon="Edit" Content="Config Editor" Tag="Config" />
             </NavigationView.MenuItems>
             <Frame x:Name="contentFrame" x:FieldModifier="public" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
 
@@ -35,5 +36,16 @@
 
         </NavigationView>
 
+        <mscontrols:TeachingTip x:Name="UpdateLauncherButtonTeachingTip"
+                                Target="{x:Bind UpdateLauncherButton}"
+                                PreferredPlacement="BottomLeft"
+                                Title="Update the App"
+                                Subtitle="Stay up-to-date with the latest stability, security and feature updates.">
+            <mscontrols:TeachingTip.IconSource>
+                <mscontrols:SymbolIconSource Symbol="Download" />
+            </mscontrols:TeachingTip.IconSource>
+
+        </mscontrols:TeachingTip>
+        
     </Grid>
 </Page>

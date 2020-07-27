@@ -46,6 +46,9 @@ namespace ROR2ModManager.Pages.Install
     public class SelectParameters
     {
         public LWPackageData[] packagesLW;
+        public string DefaultName = null;
+        public string ProtocolName = null;
+        public string ProtocolUri = null;
     }
 
     /// <summary>
@@ -56,8 +59,7 @@ namespace ROR2ModManager.Pages.Install
 
         private Package[] Packages;
         private ObservableCollection<Package> PackagesFiltered;
-
-        ILogger log = LogManagerFactory.DefaultLogManager.GetLogger<MainPage>();
+        private SelectParameters NavigatedToParameters;
 
         public Select()
         {
@@ -66,6 +68,7 @@ namespace ROR2ModManager.Pages.Install
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
+            NavigatedToParameters = (e.Parameter as SelectParameters);
             InstallButton.IsEnabled = false;
             _ = Task.Run(async () =>
             {
@@ -107,7 +110,14 @@ namespace ROR2ModManager.Pages.Install
 
             /* Make sure all text is case-insensitive when comparing, and make sure 
             the filtered items are in a List object */
-            TempFiltered = Packages.Where(pkg => pkg.full_name.Contains(FilterTextBox.Text, StringComparison.InvariantCultureIgnoreCase)).ToList();
+            try
+            {
+                TempFiltered = Packages.Where(pkg => pkg.full_name.Contains(FilterTextBox.Text, StringComparison.InvariantCultureIgnoreCase)).ToList();
+            } catch (ArgumentNullException)
+            {
+                TempFiltered = Packages.ToList();
+            }
+            
             
 
             /* Go through TempFiltered and compare it with the current PeopleFiltered collection,
@@ -198,7 +208,7 @@ namespace ROR2ModManager.Pages.Install
 
         private void InstallButton_Click(object sender, RoutedEventArgs e)
         {
-            var parameters = new ConfirmParameters { Packages = Packages.Where(x => x._is_selected).ToList() };
+            var parameters = new ConfirmParameters { Packages = Packages.Where(x => x._is_selected).ToList(), DefaultName = NavigatedToParameters?.DefaultName };
             MainPage.Current.contentFrame.Navigate(typeof(Pages.Install.Confirm), parameters);
         }
 

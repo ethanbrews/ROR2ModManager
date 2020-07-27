@@ -20,7 +20,7 @@ namespace UWPTools.Settings
         public T Value
         {
             set => ApplicationData.Current.LocalSettings.Values[Key] = value;
-            get => (T)Convert.ChangeType(ApplicationData.Current.LocalSettings.Values[Key], typeof(T));
+            get => (T)Convert.ChangeType(ApplicationData.Current.LocalSettings.Values[Key] ?? defaultValue, typeof(T));
         }
     }
 }

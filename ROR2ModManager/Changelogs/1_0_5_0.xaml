@@ -9,9 +9,14 @@
     Background="{ThemeResource RegionBrush}">
 
     <StackPanel>
-        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Added a changelog viewer" />
-        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Fixed profile sharing issue" />
-        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Redesigned theme switcher in settings" />
-        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Fixed navigation bar issues" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Modified Theme" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Shared profiles now show the profile name" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Added crash reports to help improve app stability" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Analytics and crash reporting can now be disabled in settings" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Fixed the navigation bar update button layout" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Improved the UI for selecting a profile name" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Hopefully fixed a bug when opening a shared profile that caused a crash" />
+        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• General performance improvements" />
+        <TextBlock Margin="0 10 0 0" Style="{StaticResource BodyTextBlockStyle}" Text="Any feedback or issues can be reported on the "><Hyperlink NavigateUri="https://github.com/ethanbrews/RiskOfRain2ModManagerIssueTracker/issues">GitHub issue tracker</Hyperlink>.</TextBlock>
     </StackPanel>
 </Page>
