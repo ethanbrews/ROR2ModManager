@@ -23,7 +23,7 @@
             <NavigationView.MenuItems>
                 <NavigationViewItem Icon="Play" Content="Play Game" Tag="Play" />
                 <NavigationViewItem Icon="Download" Content="Create Profile" Tag="Install" />
-                <NavigationViewItem Icon="Edit" Content="Config Editor" Tag="Config" />
+                <NavigationViewItem x:Name="ConfigEditorNavigationItem" Icon="Edit" Content="Config Editor" Tag="Config" />
             </NavigationView.MenuItems>
             <Frame x:Name="contentFrame" x:FieldModifier="public" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
 

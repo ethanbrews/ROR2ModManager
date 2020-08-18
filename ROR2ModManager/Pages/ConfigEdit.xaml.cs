@@ -14,6 +14,9 @@ using UWPTools.Storage;
 using Microsoft.UI.Xaml.Controls;
 using Windows.System;
 using Microsoft.AppCenter.Crashes;
+using ROR2ModManager;
+using Windows.UI.Xaml.Data;
+using Windows.UI.Xaml.Navigation;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -22,13 +25,8 @@ namespace ROR2ModManager.Pages
 
     public class ConfigData
     {
-        public string Name { get; set; }
-        public ConfigParser Parser { get; set; }
-        public IEnumerable<string> SectionNames { get; set; }
-        public string ConfigPath { get; set; }
+       
     }
-
-    public class AllConfigItemsProfile : Profile { };
 
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
@@ -40,9 +38,12 @@ namespace ROR2ModManager.Pages
             this.InitializeComponent();
         }
 
-        ObservableCollection<ConfigData> ConfigItems;
-        ObservableCollection<Profile> Profiles;
-        List<ConfigData> AllConfigItems;
+        class AllConfigItemsProfile : Profile { };
+
+        public Dictionary<string, IniParser.Model.IniData> AllFiles;
+        public Dictionary<string, IniParser.Model.IniData> Files;
+        public List<Profile> Profiles;
+        public IniParser.Model.IniData SelectedData;
 
         private async Task<StorageFolder> GetConfigFolderAsync()
         {
@@ -66,82 +67,78 @@ namespace ROR2ModManager.Pages
 
         private async void Page_Loading(FrameworkElement sender, object args)
         {
-            var configFolder = await GetConfigFolderAsync();
-            if (configFolder is null)
-            {
-                MainPage.Current.contentFrame.Navigate(typeof(Pages.Play));
-                return;
-            }
-
-            AllConfigItems = new List<ConfigData>();
-            foreach (var configFile in await configFolder.GetFilesAsync())
+            var newFiles = new Dictionary<string, IniParser.Model.IniData>();
+            var folder = await GetConfigFolderAsync();
+            foreach(var file in await folder.GetFilesAsync())
             {
                 try
                 {
-                    var parser = new ConfigParser(configFile.Path);
-                    AllConfigItems.Add(new ConfigData
-                    {
-                        Name = configFile.Name,
-                        SectionNames = from sec in parser.Sections select sec.SectionName,
-                        Parser = parser,
-                        ConfigPath = configFile.Path
-                    });
+                    var text = await FileIO.ReadTextAsync(file);
+                    var cfg = Configuration.LoadConfig(text);
+                    newFiles[file.DisplayName] = cfg;
                 } catch (Exception ex)
                 {
-                    await new ContentDialog
-                    {
-                        Title = "Error",
-                        Content = $"An exception ({ex.GetType().FullName}) occurred when loading config.",
-                        IsSecondaryButtonEnabled = false,
-                        PrimaryButtonText = "Close"
-                    }.ShowAsync();
-                    Crashes.TrackError(ex);
-                    MainPage.Current.contentFrame.Navigate(typeof(Play));
-                    return;
+                    Crashes.TrackError(ex, new Dictionary<string, string> { { "name", file.Name } });
                 }
                 
             }
 
-            ConfigItems = new ObservableCollection<ConfigData>(AllConfigItems);
+            var AllProfiles = (await ProfileManager.GetProfiles()).Where(x => x.Name != "Vanilla").ToList();
+            AllProfiles.Insert(0, new AllConfigItemsProfile { Name = "All", PacksLW = new API.LWPackageData[] { } });
+            Profiles = AllProfiles;
 
-            CfgTree.ItemsSource = ConfigItems;
+            AllFiles = newFiles;
+            Files = newFiles;
+            System.Diagnostics.Debug.WriteLine($"Loaded {Files.Count()} configuration files.");
+            ModsList.ItemsSource = Files;
+            ConfigItems.ItemsSource = SelectedData;
+            ModsList.SelectedIndex = 0;
+            OptionsPivot.ItemsSource = Profiles;
+        }
 
-            Profiles = new ObservableCollection<Profile>((await ProfileManager.GetProfiles()).Where(x => x.Name != "Vanilla").ToList());
-            Profiles.Insert(0, new AllConfigItemsProfile { Name = "All", PacksLW = new API.LWPackageData[] { } });
-            ProfilesPivot.ItemsSource = Profiles;
-            ProfilesPivot.SelectionChanged += ProfilesPivot_SelectionChanged;
+        private void ModsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            SelectedData = ((KeyValuePair<string, IniParser.Model.IniData>)(sender as ListView).SelectedItem).Value;
+            ConfigItems.ItemsSource = SelectedData.Sections;
         }
 
         private void FilterListForProfile(Profile profile)
         {
-            List<ConfigData> TempFiltered = new List<ConfigData>();
+            var TempFiltered = new Dictionary<string, IniParser.Model.IniData>();
 
-            if (profile is null)
+            if (profile == null)
             {
-                TempFiltered = AllConfigItems;
-            } else
+                TempFiltered = AllFiles;
+            }
+            else
             {
                 foreach (var p in profile.PacksLW)
                 {
                     var parts = p.full_name.Split('-', '_', '.');
                     foreach (var part in parts)
                     {
-                        var configs = AllConfigItems.Where(x => x.Name.Split('.').Contains(part)).ToList();
-                        TempFiltered.AddRange(configs);
+                        var configs = AllFiles.Where(x => x.Key.Split('.').Contains(part)).ToList();
+                        foreach(var c in configs)
+                        {
+                            if (!TempFiltered.ContainsKey(c.Key))
+                                TempFiltered.Add(c.Key, c.Value);
+                        }
                     }
                 }
             }
 
+            System.Diagnostics.Debug.WriteLine($"Filtering config list from {Files.Count()} to {TempFiltered.Count()} items out of a possible {AllFiles.Count()}");
+
 
             if (profile is AllConfigItemsProfile)
-                TempFiltered = AllConfigItems;
+                TempFiltered = AllFiles;
 
-            for (int i = ConfigItems.Count - 1; i >= 0; i--)
+            for (int i = Files.Count - 1; i >= 0; i--)
             {
-                var item = ConfigItems[i];
-                if (!TempFiltered.Contains(item))
+                var item = Files.Keys.ElementAt(i);
+                if (!TempFiltered.ContainsKey(item))
                 {
-                    ConfigItems.Remove(item);
+                    Files.Remove(item);
                 }
             }
 
@@ -150,93 +147,113 @@ namespace ROR2ModManager.Pages
 
             foreach (var item in TempFiltered)
             {
-                if (!ConfigItems.Contains(item))
+                if (!Files.ContainsKey(item.Key))
                 {
-                    ConfigItems.Add(item);
+                    Files.Add(item.Key, item.Value);
                 }
             }
 
         }
 
-        private bool IsBool(string v) => v == "true" || v == "false";
-        private bool IsInteger(string v)
+        private void OptionsPivot_SelectionChanged(object sender, SelectionChangedEventArgs e) => FilterListForProfile(e.AddedItems[0] as Profile);
+
+
+        protected override async void OnNavigatedFrom(NavigationEventArgs e)
         {
-            return false; // Number box causes crash right now
-            try { int.Parse(v); } catch { return false; }
-            return true;
-        }
-
-        private void ProfilesPivot_SelectionChanged(object sender, SelectionChangedEventArgs e) => FilterListForProfile(e.AddedItems[0] as Profile);
-
-        private void CfgTree_ItemInvoked(object sender, SelectionChangedEventArgs e)
-        {
-
-            var configData = (sender as ListView).SelectedItem as ConfigData;
-            if (configData == null)
-                return;
-
-            EditorStackPanel.Children.Clear();
-
-            foreach(var sec in configData.Parser.Sections)
+            base.OnNavigatedFrom(e);
+            var cfgDir = await GetConfigFolderAsync();
+            foreach(var f in AllFiles)
             {
-                EditorStackPanel.Children.Add(new TextBlock { Text = sec.SectionName, Style = this.Resources["TitleTextBlockStyle"] as Style, Margin = new Thickness(0, 10, 0, 0) });
-                foreach (var item in sec.Keys)
-                {
-                    var containerStackPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 5, 0, 5) };
-                    containerStackPanel.Children.Add(new TextBlock { Text = item.Name, MinWidth = 300, VerticalAlignment = VerticalAlignment.Center });
-                    FrameworkElement inputElement;
-
-                    if (IsBool(item.Content))
-                    {
-                        /*
-                        inputElement = new ToggleButton { Content = item.Content, IsChecked = item.Content == "true", MinWidth = 300 };
-                        (inputElement as ToggleButton).Checked += async (object _1, RoutedEventArgs _2) =>
-                        {
-                            await WriteConfiguration((inputElement as ToggleButton).IsChecked.ToString().ToLower(), sec.SectionName, item.Name, configData.ConfigPath, configData.Parser);
-                            (inputElement as ToggleButton).Content = (_1 as ToggleButton).IsChecked.ToString().ToLower();
-                        };*/
-                        inputElement = new ToggleSwitch { IsOn = item.Content == "true", OnContent = "true", OffContent = "false", MinWidth = 300 };
-                        (inputElement as ToggleSwitch).Toggled += async (object _1, RoutedEventArgs _2) =>
-                        {
-                            await WriteConfiguration((inputElement as ToggleSwitch).IsOn.ToString().ToLower(), sec.SectionName, item.Name, configData.ConfigPath, configData.Parser);
-                        };
-                    } else if (IsInteger(item.Content))
-                    {
-                        inputElement = new Microsoft.UI.Xaml.Controls.NumberBox { Value = int.Parse(item.Content)};
-                        (inputElement as NumberBox).ValueChanged += async (NumberBox _1, NumberBoxValueChangedEventArgs _2) =>
-                        {
-                            await WriteConfiguration((inputElement as NumberBox).Value.ToString(), sec.SectionName, item.Name, configData.ConfigPath, configData.Parser);
-                        };
-                    } else
-                    {
-                        inputElement = new TextBox { Width = 200, Text = item.Content, MinWidth = 300 };
-                        (inputElement as TextBox).TextChanged += async (object _1, TextChangedEventArgs _2) =>
-                        {
-                            await WriteConfiguration((inputElement as TextBox).Text, sec.SectionName, item.Name, configData.ConfigPath, configData.Parser);
-                        };
-                    }
-
-                    containerStackPanel.Children.Add(inputElement);
-                    try { EditorStackPanel.Children.Add(containerStackPanel); } catch { System.Diagnostics.Debug.WriteLine(item.Name); }
-                    
-                }
+                string cfgs = Configuration.WriteConfig(f.Value);
+                await (await cfgDir.GetOrCreateStorageFileAsync($"{f.Key}.cfg")).WriteTextAsync(cfgs);
             }
         }
 
-        private async Task WriteConfiguration(string Value, string sectionName, string keyName, string path, ConfigParser parser)
-        {
-            parser.SetValue(sectionName, keyName, Value);
-            var tempFile = await ApplicationData.Current.TemporaryFolder.CreateFileAsync(Guid.NewGuid().ToString() + ".cfg", CreationCollisionOption.ReplaceExisting);
-            var newFile = await StorageFile.GetFileFromPathAsync(path);
-            parser.Save(tempFile.Path);
-            await tempFile.CopyAndReplaceAsync(newFile);
-            _ = tempFile.DeleteAsync();
-            
-        }
+        private async void ConfigFolderButton_Click(object sender, RoutedEventArgs e) => await Launcher.LaunchFolderAsync(await GetConfigFolderAsync());
+    }
 
-        private async void Button_OpenConfig_Click(object sender, RoutedEventArgs e)
+
+    public class ConfigEditorTemplateSelector : DataTemplateSelector
+    {
+        public DataTemplate StringTemplate { get; set; }
+        public DataTemplate IntTemplate { get; set; }
+        public DataTemplate BoolTemplate { get; set; }
+
+        public new DataTemplate SelectTemplate(object item, DependencyObject container)
         {
-            await Launcher.LaunchFolderAsync(await GetConfigFolderAsync());
+            // Null value can be passed by IDE designer
+            if (item == null)
+            {
+                System.Diagnostics.Debug.WriteLine("Parameter 'item' for ConfigEditorTemplateSelector#SelectTemplate is null!");
+                return null;
+            } else if (!(item is IniParser.Model.KeyData))
+            {
+                System.Diagnostics.Debug.WriteLine("Parameter 'item' for ConfigEditorTemplateSelector#SelectTemplate is not an instance of IniParser.Model.KeyData !");
+                return null;
+            }
+
+            var data = item as IniParser.Model.KeyData;
+            System.Diagnostics.Debug.WriteLine($"Selecting DataTemplate for {data.KeyName} = {data.Value};");
+
+            try
+            {
+                Convert.ToInt32(data.Value);
+                return IntTemplate;
+            }
+            catch { }
+            try
+            {
+                Convert.ToBoolean(data.Value);
+                return BoolTemplate;
+            }
+            catch { }
+            return StringTemplate;
         }
+    }
+
+    enum DataTypes
+    {
+        STRING,
+        INT,
+        BOOL,
+        INVALID
+    }
+
+    class TypeChecker
+    {
+        public static DataTypes GetDataTypeForValue(object item)
+        {
+            try
+            {
+                Convert.ToInt32(item);
+                return DataTypes.INT;
+            }
+            catch { }
+            try
+            {
+                Convert.ToBoolean(item);
+                return DataTypes.BOOL;
+            }
+            catch { }
+            return DataTypes.STRING;
+        }
+    }
+
+    class StringValueVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language) => TypeChecker.GetDataTypeForValue(value) == DataTypes.STRING ? Visibility.Visible : Visibility.Collapsed;
+        public object ConvertBack(object value, Type targetType, object parameter, string language) => null;
+    }
+
+    class BoolValueVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language) => TypeChecker.GetDataTypeForValue(value) == DataTypes.BOOL ? Visibility.Visible : Visibility.Collapsed;
+        public object ConvertBack(object value, Type targetType, object parameter, string language) => null;
+    }
+
+    class IntValueVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language) => TypeChecker.GetDataTypeForValue(value) == DataTypes.INT ? Visibility.Visible : Visibility.Collapsed;
+        public object ConvertBack(object value, Type targetType, object parameter, string language) => null;
     }
 }

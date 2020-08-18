@@ -235,10 +235,17 @@ namespace ROR2ModManager
             }
 
             Analytics.TrackEvent(AnalyticsEventNames.ProfileStarted);
-            var options = new Windows.System.LauncherOptions();
-            options.PreferredApplicationDisplayName = "Steam";
 
-            await Launcher.LaunchUriAsync(new Uri("steam://rungameid/632360"));
+            if (ApplicationSettings.LaunchGameDirectly.Value)
+            {
+                await Launcher.LaunchFileAsync(await folder.GetFileAsync("Risk of Rain 2.exe"));
+            } else
+            {
+                var options = new Windows.System.LauncherOptions();
+                options.PreferredApplicationDisplayName = "Steam";
+
+                await Launcher.LaunchUriAsync(new Uri("steam://rungameid/632360"));
+            }
         }
 
         public static async Task SaveProfilesToFile()

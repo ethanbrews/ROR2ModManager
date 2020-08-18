@@ -18,6 +18,10 @@ using Windows.Storage;
 using System.Runtime.Serialization.Formatters.Binary;
 using Windows.System;
 using Windows.UI.Xaml.Media.Animation;
+using System.Threading.Tasks;
+using System.Threading;
+using Windows.UI.Core;
+using Microsoft.AppCenter.Crashes;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -49,10 +53,18 @@ namespace ROR2ModManager.Pages
             if (args?.contentDialogToShow != null)
                 await args.contentDialogToShow.ShowAsync();
 
+            ReloadProfiles();
+        }
+
+        private async void ReloadProfiles()
+        {
+            Profiles.Clear();
             await ProfileManager.LoadProfilesFromFile();
-            foreach(var profile in await ProfileManager.GetProfiles())
+            foreach (var profile in await ProfileManager.GetProfiles())
             {
                 profile._IsVanilla = profile.Name == "Vanilla";
+                if (profile._IsVanilla)
+                    profile.PacksLW = new API.LWPackageData[] { new API.LWPackageData { full_name = "Prismatic Trials", version = null }, new API.LWPackageData { full_name = "Eclipse", version = null } };
                 Profiles.Add(profile);
                 System.Diagnostics.Debug.WriteLine($"Displaying profile: {profile.Name}");
             }
@@ -63,6 +75,11 @@ namespace ROR2ModManager.Pages
         {
             var p = (sender as Button).DataContext as Profile;
             await ProfileManager.DeleteProfile(p);
+            _ = Task.Run(() =>
+            {
+                Thread.Sleep(300);
+                _ = Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => ReloadProfiles());
+            });
             //MainStackPanel.Children.Remove(MainStackPanel.Children.Where(x => (x as FrameworkElement).Tag as string == p.Name as string).First());
         }
 
@@ -101,8 +118,22 @@ namespace ROR2ModManager.Pages
         {
             var button = sender as Button;
             button.IsEnabled = false;
-            await ProfileManager.StartGameForProfile((Profile)button.DataContext);
+            try
+            {
+                await ProfileManager.StartGameForProfile((Profile)button.DataContext);
+            } catch (Exception ex)
+            {
+                Crashes.TrackError(ex);
+                await new ContentDialog
+                {
+                    Title = "Error launching game",
+                    Content = new TextBlock { TextWrapping = TextWrapping.WrapWholeWords, Text = $"An error occurred launching the game. Ensure both Risk of Rain 2 and Steam are installed. If the game can be launched via steam, try updating the mods. (Error: {ex.GetType()})" },
+                    IsSecondaryButtonEnabled = false,
+                    PrimaryButtonText = "Close"
+                }.ShowAsync();
+            }
             button.IsEnabled = true;
+
         }
 
         private void StackPanel_Loaded(object sender, RoutedEventArgs e)

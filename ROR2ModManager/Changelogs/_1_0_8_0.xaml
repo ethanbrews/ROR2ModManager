@@ -16,7 +16,6 @@
         <TextBlock Style="{StaticResource BodyTextBlockStyle}">• The app is now open source! View it on <Hyperlink NavigateUri="https://github.com/ethanbrews/ROR2ModManager">https://github.com/ethanbrews/ROR2ModManager</Hyperlink></TextBlock>
 
         <TextBlock Style="{StaticResource TitleTextBlockStyle}" Margin="0 15 0 0" Text="Bug Fixes" />
-        <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Fixed config editor failing to load" />
         <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• The 'Update Mods' button now automatically selects the newest version of each mod" />
         <TextBlock Style="{StaticResource BodyTextBlockStyle}" Text="• Improved play page performance" />
         <TextBlock Margin="0 15 0 0" Style="{StaticResource BodyTextBlockStyle}" Text="Any feedback or issues can be reported on the "><Hyperlink NavigateUri="https://github.com/ethanbrews/RiskOfRain2ModManagerIssueTracker/issues">GitHub issue tracker</Hyperlink>.</TextBlock>

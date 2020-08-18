@@ -54,8 +54,10 @@ namespace ROR2ModManager.Pages.Settings
             AnalyticsToggleSwitch.IsOn = await Analytics.IsEnabledAsync();
             CrashalyticsToggleSwitch.IsOn = await Crashes.IsEnabledAsync();
 
-            AutoUpdateEnabled.IsOn = ApplicationSettings.UpdateAppAutomatically.Value;
+            //AutoUpdateEnabled.IsOn = ApplicationSettings.UpdateAppAutomatically.Value;
             ModsMarqueeSwitch.IsOn = ApplicationSettings.UseMarqueeEffectForMods.Value;
+            ExperimentalFeaturesSwitch.IsOn = ApplicationSettings.ShowExperimentalPages.Value;
+            LaunchDirectlySwitch.IsOn = ApplicationSettings.LaunchGameDirectly.Value;
 
             Package package = Package.Current;
             PackageId packageId = package.Id;
@@ -99,43 +101,21 @@ namespace ROR2ModManager.Pages.Settings
             (DefaultDarkThemeButton.Children[3] as Rectangle).Fill = new AcrylicBrush { TintColor = FromHex(0xD7B9C7) };
             (DefaultDarkThemeButton.Children[4] as Rectangle).Fill = new AcrylicBrush { TintColor = FromHex(0xD7B9C7) };
 
-            /*
-            WindowsLightThemeButton.Background = new SolidColorBrush(Colors.White);
-            (WindowsLightThemeButton.Children[0] as TextBlock).Foreground = new SolidColorBrush(Colors.Black);
-            (WindowsLightThemeButton.Children[1] as Rectangle).Fill = new AcrylicBrush { TintColor = FromHex(0x898989) };
-            (WindowsLightThemeButton.Children[2] as Rectangle).Fill = new AcrylicBrush { TintColor = FromHex(0x0073CF) };
-            (WindowsLightThemeButton.Children[3] as Rectangle).Fill = new AcrylicBrush { TintColor = FromHex(0x898989) };
-            (WindowsLightThemeButton.Children[4] as Rectangle).Fill = new AcrylicBrush { TintColor = FromHex(0x898989) };
+            (DefaultSystemThemeCanvas.Children[0] as Polygon).Fill = new SolidColorBrush(FromHex(0xD8D9DB));
+            (DefaultSystemThemeCanvas.Children[1] as Polygon).Fill = new SolidColorBrush(FromHex(0x1A1423));
+            (DefaultSystemThemeCanvas.Children[2] as TextBlock).Foreground = new SolidColorBrush(Colors.Black);
 
-            WindowsDarkThemeButton.Background = new SolidColorBrush(Colors.Black);
-            (WindowsDarkThemeButton.Children[0] as TextBlock).Foreground = new SolidColorBrush(Colors.White);
-            (WindowsDarkThemeButton.Children[1] as Rectangle).Fill = new AcrylicBrush { TintColor = FromHex(0x9A9A9A) };
-            (WindowsDarkThemeButton.Children[2] as Rectangle).Fill = new AcrylicBrush { TintColor = FromHex(0x0073CF) };
-            (WindowsDarkThemeButton.Children[3] as Rectangle).Fill = new AcrylicBrush { TintColor = FromHex(0x9A9A9A) };
-            (WindowsDarkThemeButton.Children[4] as Rectangle).Fill = new AcrylicBrush { TintColor = FromHex(0x9A9A9A) };
-            */
+            (DefaultSystemThemeCanvas.Children[3] as Polygon).Fill = new AcrylicBrush { TintColor = FromHex(0x717071) };
+            (DefaultSystemThemeCanvas.Children[4] as Polygon).Fill = new AcrylicBrush { TintColor = FromHex(0xD7B9C7) };
 
-            /*
-            var winRes = App.ThemeList["windows"].ThemeDictionaries;
+            (DefaultSystemThemeCanvas.Children[5] as Polygon).Fill = new AcrylicBrush { TintColor = FromHex(0xCF333F) };
+            (DefaultSystemThemeCanvas.Children[6] as Polygon).Fill = new AcrylicBrush { TintColor = FromHex(0xCC5460) };
 
-            ResourceDictionary GetValueOrNull(IDictionary<object, object> d, string key)
-            {
-                object result;
-                if (d.TryGetValue(key, out result))
-                    return result as ResourceDictionary;
-                return null;
-            }
-
-            var winResLight = GetValueOrNull(winRes, "Light");
-            var winResDark = GetValueOrNull(winRes, "Dark");
-            var winResDefault = GetValueOrNull(winRes, "Default");
-            if (winResDark == null)
-                winResDark = winResDefault;
-            else
-                winResLight = winResDefault;
-
-            Themesp.Children.Add(new UWPTools.Themes.ThemeIcon(winResLight, winResDark));
-            */
+            (DefaultSystemThemeCanvas.Children[7] as Polygon).Fill = new AcrylicBrush { TintColor = FromHex(0x717071) };
+            (DefaultSystemThemeCanvas.Children[8] as Polygon).Fill = new AcrylicBrush { TintColor = FromHex(0xD7B9C7) };
+            
+            (DefaultSystemThemeCanvas.Children[9] as Polygon).Fill = new AcrylicBrush { TintColor = FromHex(0xD7B9C7) };
+            (DefaultSystemThemeCanvas.Children[10] as Polygon).Fill = new AcrylicBrush { TintColor = FromHex(0x717071) };
 
         }
 
@@ -184,15 +164,11 @@ namespace ROR2ModManager.Pages.Settings
             {
                 settingsValues["theme-name"] = "default";
                 settingsValues["theme-shade"] = "Dark";
-            }/* else if (sender == WindowsLightThemeButton)
+            } else if (sender == DefaultSystemThemeButton)
             {
-                settingsValues["theme-name"] = "windows";
-                settingsValues["theme-shade"] = "Light";
-            } else if (sender == WindowsDarkThemeButton)
-            {
-                settingsValues["theme-name"] = "windows";
-                settingsValues["theme-shade"] = "Dark";
-            }*/
+                settingsValues["theme-name"] = "default";
+                settingsValues["theme-shade"] = "System";
+            }
 
             App.SetApplicationThemeBySettingsValue();
         }
@@ -239,6 +215,18 @@ namespace ROR2ModManager.Pages.Settings
         {
             ApplicationSettings.UseMarqueeEffectForMods.Value = ModsMarqueeSwitch.IsOn;
             Analytics.TrackEvent(AnalyticsEventNames.ToggledModsMarquee, new Dictionary<string, string> { { "isOn", ModsMarqueeSwitch.IsOn.ToString() } });
+        }
+
+        private void ExperimentalFeaturesSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            ApplicationSettings.ShowExperimentalPages.Value = ExperimentalFeaturesSwitch.IsOn;
+            Analytics.TrackEvent(AnalyticsEventNames.ToggledExperimentalFeatures, new Dictionary<string, string> { { "isOn", ModsMarqueeSwitch.IsOn.ToString() } });
+        }
+
+        private void LaunchDirectlySwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            ApplicationSettings.LaunchGameDirectly.Value = LaunchDirectlySwitch.IsOn;
+            Analytics.TrackEvent(AnalyticsEventNames.LaunchGameWithoutSteam, new Dictionary<string, string> { { "isOn", ModsMarqueeSwitch.IsOn.ToString() } });
         }
     }
 }

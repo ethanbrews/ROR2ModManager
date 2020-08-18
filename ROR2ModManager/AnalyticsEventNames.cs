@@ -17,5 +17,7 @@ namespace ROR2ModManager
         public static readonly string DwrandazUpdateManager = "Dwrandaz.AutoUpdateManager";
         public static readonly string ExceptionCaught = "ExceptionCaught";
         public static readonly string ToggledModsMarquee = "ModsMarqueeEffectToggled";
+        public static readonly string ToggledExperimentalFeatures = "ExperimentalFeaturesToggled";
+        public static readonly string LaunchGameWithoutSteam = "LaunchGameWithoutSteamEnabled";
     }
 }

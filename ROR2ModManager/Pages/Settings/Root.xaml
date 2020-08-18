@@ -47,6 +47,14 @@
                 <TextBlock Text="General" Style="{StaticResource TitleTextBlockStyle}" />
                 <TextBlock Margin="0 3 0 0" Text="Mods are shown in the play page with a marquee effect, this can be disabled here." Style="{StaticResource BodyTextBlockStyle}" />
                 <ToggleSwitch Margin="0 3 0 0" x:Name="ModsMarqueeSwitch" OffContent="Mods List Disabled" OnContent="Mods List Enabled" Toggled="ModsMarqueeSwitch_Toggled" />
+                <TextBlock Margin="0 3 0 0" Style="{StaticResource BodyTextBlockStyle}" TextWrapping="WrapWholeWords">Enable or disable experimental features. These features are incomplete and can cause issues with the game. <Run Text="The app must be restarted for this to take effect." FontWeight="Black" /></TextBlock>
+                <ToggleSwitch Margin="0 3 0 0" x:Name="ExperimentalFeaturesSwitch" OffContent="Experimental Features Disabled" OnContent="Experimental Features Enabled" Toggled="ExperimentalFeaturesSwitch_Toggled" />
+            </StackPanel>
+
+            <StackPanel Visibility="Collapsed" Margin="0 20 0 0" Background="{ThemeResource SystemControlAltLowAcrylicWindowBrush}" Padding="20" CornerRadius="10">
+                <TextBlock Text="Launch Options" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock Margin="0 3 0 0" Text="The game may be launched directly to start the game without using Steam." Style="{StaticResource BodyTextBlockStyle}" />
+                <ToggleSwitch Margin="0 3 0 0" x:Name="LaunchDirectlySwitch" OffContent="Launch Game Directly" OnContent="Launch Game Directly" Toggled="LaunchDirectlySwitch_Toggled" />
             </StackPanel>
 
             <StackPanel Margin="0 20 0 0" Background="{ThemeResource SystemControlAltLowAcrylicWindowBrush}" Padding="20" CornerRadius="10">
@@ -62,7 +70,7 @@
             <TextBlock Margin="0, 3, 0, 0" Text="Windows doesn't allow UWP apps to be installed to a different location" Style="{StaticResource CaptionTextBlockStyle}" />
             </StackPanel>
 
-            <StackPanel Margin="0 20 0 0" Background="{ThemeResource SystemControlAltLowAcrylicWindowBrush}" Padding="20" CornerRadius="10">
+            <StackPanel Visibility="Collapsed" Margin="0 20 0 0" Background="{ThemeResource SystemControlAltLowAcrylicWindowBrush}" Padding="20" CornerRadius="10">
                 <TextBlock Text="Auto Update" Style="{StaticResource TitleTextBlockStyle}" />
                 <TextBlock Margin="0 3 0 0" Text="The app will automatically update if this is enabled." Style="{StaticResource BodyTextBlockStyle}" />
                 <TextBlock Text="If this is disabled, an update icon will be displayed in the navigation bar which will install the update in the background." Style="{StaticResource BodyTextBlockStyle}" />
@@ -96,25 +104,22 @@
                         <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
                         <Rectangle Margin="0,5,0,0" Width="100" Height="10" Fill="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" HorizontalAlignment="Left" />
                     </StackPanel>
-                    <!--<StackPanel Width="80" Height="100" PointerExited="ThemeButton_PointerExited" PointerEntered="ThemeButton_PointerEntered" BorderBrush="{ThemeResource SystemControlBackgroundListMediumRevealBorderBrush}" BorderThickness="3">
-                    <Canvas Width="74" Height="94" x:Name="MyCanvas">
-                        <Polygon Points="0,0, 74,0, 0,94" Fill="Aqua" Canvas.Top="0" Canvas.Left="0" />
-                        <Polygon Points="74,0, 0,94, 74,94" Fill="Red" Canvas.Top="0" Canvas.Left="0" />
-                        <TextBlock FontSize="24" FontWeight="Bold" Text="Aa" Canvas.Left="10" Canvas.Top="2" />
-                        <Polygon Points="0,0, 60,0, 60,10, 0,10" Fill="Orange" Canvas.Left="10" Canvas.Top="32" />
-                        <Polygon Points="42,0, 60,0, 60,10, 34,10" Fill="Purple" Canvas.Left="10" Canvas.Top="35" />
+                    <StackPanel PointerExited="ThemeButton_PointerExited" PointerEntered="ThemeButton_PointerEntered" Tapped="ThemeButton_Tapped" Background="{ThemeResource RegionBrush}" x:Name="DefaultSystemThemeButton" Width="80" Height="100" BorderThickness="3" BorderBrush="{ThemeResource SystemControlBackgroundListMediumRevealBorderBrush}" Margin="10,0,0,0">
+                        <Canvas Width="74" Height="94" x:Name="DefaultSystemThemeCanvas">
+                            <Polygon Points="0,0, 74,0, 0,94" Fill="Aqua" Canvas.Top="0" Canvas.Left="0" />
+                            <Polygon Points="74,0, 0,94, 74,94" Fill="Red" Canvas.Top="0" Canvas.Left="0" />
+                            <TextBlock FontSize="24" FontWeight="Bold" Text="Aa" Canvas.Left="10" Canvas.Top="2" />
+                            <Polygon Points="0,0, 57,0, 57,10, 0,10" Fill="Orange" Canvas.Left="10" Canvas.Top="32" />
+                            <Polygon Points="42,0, 60,0, 60,10, 34,10" Fill="Purple" Canvas.Left="7" Canvas.Top="32" />
+                            <Polygon Points="0,0, 57,0, 57,10, 0,10" Fill="Orange" Canvas.Left="10" Canvas.Top="46" />
+                            <Polygon Points="30,0, 59,0, 59,10, 22,10" Fill="Purple" Canvas.Left="8" Canvas.Top="46" />
+                            <Polygon Points="0,0, 57,0, 57,10, 0,10" Fill="Orange" Canvas.Left="10" Canvas.Top="60" />
+                            <Polygon Points="18,0, 58,0, 58,10, 10,10" Fill="Purple" Canvas.Left="9" Canvas.Top="60" />
+                            <Polygon Points="0,0, 57,0, 57,10, 0,10" Fill="Purple" Canvas.Left="10" Canvas.Top="74" />
+                            <Polygon Points="0,0, 6,0, 0,8" Fill="Orange" Canvas.Left="10" Canvas.Top="74" />
 
-                        <Polygon Points="0,0, 60,0, 60,10, 0,10" Fill="Orange" Canvas.Left="10" Canvas.Top="50" />
-                        <Polygon Points="30,0, 60,0, 60,10, 22,10" Fill="Purple" Canvas.Left="10" Canvas.Top="50" />
-
-                        <Polygon Points="0,0, 60,0, 60,10, 0,10" Fill="Orange" Canvas.Left="10" Canvas.Top="65" />
-                        <Polygon Points="18,0, 60,0, 60,10, 10,10" Fill="Purple" Canvas.Left="10" Canvas.Top="65" />
-
-                        <Polygon Points="0,0, 60,0, 60,10, 0,10" Fill="Purple" Canvas.Left="10" Canvas.Top="80" />
-                        <Polygon Points="0,0, 6,0, 0,8" Fill="Orange" Canvas.Left="10" Canvas.Top="80" />
-
-                    </Canvas>
-                </StackPanel>-->
+                        </Canvas>
+                    </StackPanel>
                 </StackPanel>
             </StackPanel>
 

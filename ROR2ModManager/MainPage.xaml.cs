@@ -112,7 +112,8 @@ namespace ROR2ModManager
                 if (ApplicationSettings.UpdateAppAutomatically.Value && new Type[] { typeof(Pages.Settings.Root), typeof(Pages.Play) }.Contains(contentFrame.CurrentSourcePageType))
                 {
                     // We can update now
-                    _ = DoApplicationUpdateIfRequired();
+                    //_ = DoApplicationUpdateIfRequired();
+                    // No more auto update. Manual update is reliable
                 }
             }
         }
@@ -157,7 +158,7 @@ namespace ROR2ModManager
                     contentFrame.Navigate(typeof(Pages.Install.Select));
                     break;
                 case "Config":
-                    contentFrame.Navigate(typeof(Pages.ConfigEdit));
+                    contentFrame.Navigate(typeof(Pages.CodeBasedConfigEdit));
                     break;
             }
             nav.SelectedItem = nav.MenuItems.Where(x => (x as FrameworkElement).Tag as string == tag).FirstOrDefault();

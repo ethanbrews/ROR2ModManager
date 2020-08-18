@@ -4,52 +4,126 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:ROR2ModManager.Pages"
     xmlns:ModManager="using:ROR2ModManager"
+    xmlns:iniModel="using:IniParser.Model"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:muxc="using:Microsoft.UI.Xaml.Controls" xmlns:media="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     mc:Ignorable="d"
     Background="{ThemeResource RegionBrush}"
     Loading="Page_Loading">
 
+    <Page.Resources>
+        <local:BoolValueVisibilityConverter x:Key="BoolValueVisibilityConverter" />
+        <local:StringValueVisibilityConverter x:Key="StringValueVisibilityConverter" />
+        <local:IntValueVisibilityConverter x:Key="IntValueVisibilityConverter" />
+
+        <media:AcrylicBrush x:Key="InfoAcrylicBrush" BackgroundSource="Backdrop"
+            TintOpacity="0.61999998614192" TintColor="#FFEC6931" FallbackColor="#FFEF8354" />
+    </Page.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="52" />
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="0" />
+            <!-- <RowDefinition Height="auto" /> -->
+            
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Pivot Grid.Row="0" x:Name="ProfilesPivot">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Pivot x:Name="OptionsPivot" Grid.Row="0" Margin="10" SelectionChanged="OptionsPivot_SelectionChanged">
             <Pivot.HeaderTemplate>
                 <DataTemplate x:DataType="ModManager:Profile">
                     <TextBlock Text="{x:Bind Name}" />
                 </DataTemplate>
             </Pivot.HeaderTemplate>
+            <Pivot.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Height="0" Width="0" />
+                </DataTemplate>
+            </Pivot.ItemTemplate>
         </Pivot>
-        <Grid Grid.Row="1" Margin="10">
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*" />
                 <ColumnDefinition Width="3*" />
             </Grid.ColumnDefinitions>
-            <Grid Grid.Row="1" Grid.Column="0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="40" />
-                    </Grid.RowDefinitions>
-                    <ListView Grid.Row="0" Name="CfgTree" Margin="0 10 10 10" SelectionChanged="CfgTree_ItemInvoked">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="local:ConfigData">
-                                <TextBlock Text="{x:Bind Name}" />
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                    <Button Margin="10 10 10 0" Height="40" Grid.Row="1" HorizontalAlignment="Stretch" Content="Open Config Folder" Click="Button_OpenConfig_Click" />
-                </Grid>
-                
+
+            <Grid Grid.Row="0" Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="auto" />
+                </Grid.RowDefinitions>
+                <ListView x:Name="ModsList" Grid.Row="0" Grid.Column="0" SelectionChanged="ModsList_SelectionChanged" BorderThickness="3" Margin="10">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Path=Key}" />
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+
+                <StackPanel Grid.Row="1" Grid.Column="0">
+                    <Button Click="ConfigFolderButton_Click" Content="Open Config Folder" HorizontalAlignment="Stretch" Margin="10 10 10 20" />
+                </StackPanel>
             </Grid>
 
-            <Grid Grid.Row="1" Grid.Column="1" BorderThickness="3" BorderBrush="{ThemeResource SystemControlBackgroundListMediumRevealBorderBrush}">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Hidden">
-                    <StackPanel x:Name="EditorStackPanel" Margin="10"></StackPanel>
-                </ScrollViewer>
-            </Grid>
+            <ScrollViewer BorderThickness="3" BorderBrush="{ThemeResource SystemControlBackgroundListMediumRevealBorderBrush}" Grid.Row="1" Grid.Column="1" Margin="10 10 10 20" HorizontalScrollMode="Disabled" VerticalScrollMode="Auto">
+                <StackPanel>
+                    <StackPanel Margin="20 28 20 0" Background="{StaticResource InfoAcrylicBrush}" Padding="10" CornerRadius="6" Orientation="Horizontal">
+                        <FontIcon Margin="0 0 7 0" FontFamily="Segoe MDL2 Assets" Glyph="&#xE946;"/>
+                        <TextBlock TextWrapping="WrapWholeWords" Text="Changes are saved automatically. The game may need to be run once before new config files appear." />
+                    </StackPanel>
+                    <ItemsControl x:Name="ConfigItems">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Padding="20" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="iniModel:SectionData">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding SectionName}" Style="{StaticResource TitleTextBlockStyle}" />
+                                    <ItemsControl ItemsSource="{Binding Keys}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0 8 0 8" Background="{StaticResource SystemControlAcrylicElementBrush}" Padding="10" CornerRadius="6">
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="auto" />
+                                                        <RowDefinition Height="auto" />
+                                                    </Grid.RowDefinitions>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="3*" />
+                                                        <ColumnDefinition Width="2*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="{Binding KeyName}" FontSize="18" />
+
+                                                    <TextBox Visibility="{Binding Value, Converter={StaticResource StringValueVisibilityConverter}}" Grid.Row="0" Grid.Column="1" Text="{Binding Value}" FontSize="14" />
+                                                    <ToggleSwitch Visibility="{Binding Value, Converter={StaticResource BoolValueVisibilityConverter}}" Grid.Row="0" Grid.Column="1" IsOn="{Binding Value}" OnContent="True" OffContent="False" FontSize="14" />
+                                                    <muxc:NumberBox Visibility="{Binding Value, Converter={StaticResource IntValueVisibilityConverter}}" Grid.Row="0" Grid.Column="1" Value="{Binding Value}" FontSize="14" SpinButtonPlacementMode="Inline" SmallChange="1" LargeChange="10" />
+
+                                                    <TextBlock Margin="0 5 0 0" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Style="{StaticResource CaptionTextBlockStyle}" Text="{Binding Comments[0]}" />
+
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+
+                    </ItemsControl>
+                </StackPanel>
+
+            </ScrollViewer>
+
         </Grid>
     </Grid>
 </Page>

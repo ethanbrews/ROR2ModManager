@@ -76,17 +76,17 @@ namespace ROR2ModManager.Pages.Install
             foreach (var pkg in parameters.Packages)
             {
                 var path = Path.Combine(ApplicationData.Current.LocalFolder.Path, pkg.full_name);
-                if (await CheckInstalledModVersion(pkg.full_name, pkg._selected_version))
+                if (!await CheckInstalledModVersion(pkg.full_name, pkg._selected_version))
                 {
                     if (System.IO.Directory.Exists(path))
                     {
+                        // Create a new folder just in case the path is a file
                         var fldr = await ApplicationData.Current.LocalFolder.CreateFolderAsync(pkg.full_name, CreationCollisionOption.OpenIfExists);
                         await fldr.DeleteAsync();
-                    } else
-                    {
-                        await ApplicationData.Current.LocalFolder.CreateFolderAsync(pkg.full_name);
                     }
-        
+
+                    await ApplicationData.Current.LocalFolder.CreateFolderAsync(pkg.full_name);
+
                     try { 
                         await Task.Run(async () => await InstallPackage(pkg.versions.Where((x) => x.version_number == pkg._selected_version).First().download_url, path));
                     } catch
@@ -123,7 +123,7 @@ namespace ROR2ModManager.Pages.Install
 
         private void SetProgressBarValue()
         {
-            ProgressBar.Value = (100*(downloadsDone/parameters.Packages.Count()));
+            ProgressBar.Value = (int)(100*(downloadsDone/parameters.Packages.Count()));
         }
 
         private void AddToDownloadsCount() {

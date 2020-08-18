@@ -29,17 +29,9 @@
 
                     <StackPanel x:Name="MarqueeStackPanelContainer" Loaded="MarqueeStackPanelContainer_Loaded">
                         <StackPanel.Resources>
-                            <Storyboard x:Name="MarqueeStoryBoard">
-                                <!--<DoubleAnimation x:Name="MarqueeStoryBoardDoubleAnimation"
-                                                 Duration="0:0:16"
-                                                 RepeatBehavior="Forever" 
-                                                 From="470"
-                                                 To="{Binding ElementName=ModsList, Path=ActualWidth, Converter={StaticResource NegatingConverter}}"
-                                                 Storyboard.TargetName="ModsList"
-                                                 Storyboard.TargetProperty="(Canvas.Left)" />-->
-                            </Storyboard>
+                            <Storyboard x:Name="MarqueeStoryBoard" />
                         </StackPanel.Resources>
-                        <Canvas Height="32">
+                        <Canvas Height="32" Margin="-5 0 0 3">
                             <Canvas.Clip>
                                 <RectangleGeometry Rect="0, 0, 447, 32" />
                             </Canvas.Clip>

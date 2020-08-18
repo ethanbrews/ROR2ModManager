@@ -9,7 +9,7 @@
   <Identity
     Name="7e71b5fe-ab00-4ddf-bf90-3f2edcb71675"
     Publisher="CN=Ethan Brews"
-    Version="1.0.7.0" />
+    Version="1.1.2.0" />
   
   <PhoneIdentity PhonePublisherId="7e71b5fe-ab00-4ddf-bf90-3f2edcb71675" PhoneProductId="7e71b5fe-ab00-4ddf-bf90-3f2edcb71675" xmlns="http://schemas.microsoft.com/appx/2014/phone/manifest"/>
 
